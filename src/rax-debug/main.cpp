@@ -1,13 +1,4 @@
 #include <stdafx.hpp>
-#include <cstdint>
-#include <stdio.h>
-#include <string>
-
-#include <rax/stdafx.hpp>
-#include <rax/refarray/refarray.hpp>
-#include <rax/tuple/tuple.hpp>
-#include <rax/math/math.hpp>
-//#include <rax/numerics/vector/vector.hpp>
 
 void test()
 {

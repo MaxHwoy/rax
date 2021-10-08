@@ -1,5 +1,9 @@
 #pragma once
 
+#include <cstdint>
+#include <rax/shared.hpp>
+#include <rax/math/math.hpp>
+
 namespace rax::numerics
 {
 	template <typename T, std::uint32_t size> struct vector

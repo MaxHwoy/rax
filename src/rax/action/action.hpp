@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 namespace rax
 {
 	using action = void(*)();
@@ -14,7 +16,7 @@ namespace rax
 
 	template <typename T> using comparison = std::int32_t(*)(T, T);
 	
-	template <typename T, typename U> using converter = U(*)(T);
+	template <typename TInput, typename TOutput> using converter = TOutput(*)(TInput);
 	
 	template <typename T> using predicate = bool(*)(T);
 }

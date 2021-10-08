@@ -1,5 +1,9 @@
 #pragma once
 
+#include <cstdint>
+#include <cassert>
+#include <rax/shared.hpp>
+
 namespace rax
 {
 	class refarray_debug_info final

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <rax/shared.hpp>
+
 namespace rax
 {
 	template <typename T1, typename T2> class tuple2

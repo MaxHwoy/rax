@@ -1,6 +1,6 @@
 workspace "rax"
 	location ".\\build\\"
-	startproject "rax-debug"
+	startproject "rax-tests"
 	vectorextensions "sse2"
 
 	targetdir "%{wks.location}\\bin\\%{cfg.buildcfg}\\"
@@ -15,7 +15,7 @@ workspace "rax"
 	warnings "extra"
 
 	includedirs {
-		".\\src\\",
+		"src/",
 	}
 
 	buildoptions {
@@ -65,8 +65,8 @@ workspace "rax"
 		language "c++"
 		kind "staticlib"
 
-		pchheader "stdafx.hpp"
-		pchsource "src/rax/stdafx.cpp"
+		-- pchheader "stdafx.hpp"
+		-- pchsource "src/rax/stdafx.cpp"
 
 		files {
 			"src/rax/**.*",
@@ -75,27 +75,6 @@ workspace "rax"
 		includedirs {
 			"src/rax",
 		}
-
-	project "rax-tests"
-		language "c++"
-		kind "consoleapp"
-
-		pchheader "stdafx.hpp"
-		pchsource "src/rax-tests/stdafx.cpp"
-
-		files {
-			"src/rax-tests/**.*",
-		}
-
-		includedirs {
-			"src/rax-tests",
-		}
-
-		links {
-			"rax",
-		}
-
-		-- submodule.include({ "gtest" })
 
 	project "rax-debug"
 		language "c++"
@@ -110,6 +89,30 @@ workspace "rax"
 
 		includedirs {
 			"src/rax-debug",
+		}
+
+		links {
+			"rax",
+		}
+
+	project "rax-tests"
+		language "c++"
+		kind "consoleapp"
+
+		-- pchheader "stdafx.hpp"
+		-- pchsource "src/rax-tests/stdafx.cpp"
+
+		files {
+			"src/rax-tests/**.*",
+			"submodules/googletest/googletest/**.h",
+			"submodules/googletest/googletest/**.hpp",
+			"submodules/googletest/googletest/src/gtest-all.cc",
+		}
+
+		includedirs {
+			"src/rax-tests",
+			"submodules/googletest/googletest",
+			"submodules/googletest/googletest/include",
 		}
 
 		links {

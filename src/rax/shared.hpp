@@ -1,11 +1,5 @@
 #pragma once
 
-#include <cstdint>
-#include <cassert>
-#include <memory>
-#include <stdarg.h>
-
-
 #ifdef _MSC_VER
 #define RAX_INLINE __forceinline
 #else

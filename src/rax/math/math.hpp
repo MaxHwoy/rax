@@ -1,11 +1,19 @@
 #pragma once
 
+#include <cstdint>
+#include <stdarg.h>
+#include <immintrin.h>
+#include <intrin.h>
+
+#include <rax/shared.hpp>
+#include <rax/tuple/tuple.hpp>
+
 namespace rax
 {
 	class math final
 	{
 	public:
-		template <typename T> static auto abs(T value) -> T
+		template <typename T> RAX_INLINE static auto abs(T value) -> T
 		{
 			if (value < 0)
 			{
@@ -15,11 +23,11 @@ namespace rax
 			return value;
 		}
 
-		template <typename T> static auto max(T a, T b) -> T
+		template <typename T> RAX_INLINE static auto max(T a, T b) -> T
 		{
 			return a > b ? a : b;
 		}
-		template <typename T> static auto max(T a, T b, T c) -> T
+		template <typename T> RAX_INLINE static auto max(T a, T b, T c) -> T
 		{
 			if (a > b)
 			{
@@ -27,7 +35,7 @@ namespace rax
 			}
 			else
 			{
-				return a > c ? a : c;
+				return b > c ? b : c;
 			}
 		}
 		template <typename T> static auto max(T* ptr, std::uint32_t size) -> T
@@ -76,11 +84,11 @@ namespace rax
 			return result;
 		}
 		
-		template <typename T> static auto min(T a, T b) -> T
+		template <typename T> RAX_INLINE static auto min(T a, T b) -> T
 		{
 			return a < b ? a : b;
 		}
-		template <typename T> static auto min(T a, T b, T c) -> T
+		template <typename T> RAX_INLINE static auto min(T a, T b, T c) -> T
 		{
 			if (a < b)
 			{
@@ -137,11 +145,11 @@ namespace rax
 			return result;
 		}
 
-		template <typename T> static auto minmax(T a, T b) -> decltype(auto)
+		template <typename T> RAX_INLINE static auto minmax(T a, T b) -> decltype(auto)
 		{
 			return a < b ? tuple2<T, T>(a, b) : tuple2<T, T>(b, a);
 		}
-		template <typename T> static auto minmax(T a, T b, T c) -> decltype(auto)
+		template <typename T> RAX_INLINE static auto minmax(T a, T b, T c) -> decltype(auto)
 		{
 			auto pair = minmax(a, b);
 			
@@ -173,7 +181,43 @@ namespace rax
 
 			return tuple2(min, max);
 		}
+		template <typename T> static auto minmax(std::uint32_t count, ...) -> decltype(auto)
+		{
+			if (count == 0)
+			{
+				return tuple2(T{}, T{});
+			}
 
-		static auto sqrt(float value) -> float;
+			va_list va;
+			va_start(va, count);
+
+			auto max = va_arg(va, T);
+			auto min = max;
+
+			for (std::uint32_t i = 1u; i < count; ++i)
+			{
+				auto value = va_arg(va, T);
+
+				if (value < min)
+				{
+					min = value;
+				}
+				else if (value > max)
+				{
+					max = value;
+				}
+			}
+
+			va_end(va);
+
+			return tuple2(min, max);
+		}
+		
+		static auto sqrt(float value) -> float
+		{
+			const auto result = ::_mm_sqrt_ss(::_mm_load_ss(&value));
+
+			return result.m128_f32[0];
+		}
 	};
 }

@@ -1,9 +1,7 @@
-#include <stdafx.hpp>
-#include <cstdint>
-
-
+#include <gtest/gtest.h>
 
 auto main(__int32 argc, const char** argv) -> std::int32_t
 {
-	return 0;
+	::testing::InitGoogleTest(&argc, (char**)argv);
+	return RUN_ALL_TESTS();
 }
