@@ -2,6 +2,13 @@
 
 namespace rax
 {
+	class array_debug_info final
+	{
+	public:
+		static inline std::int32_t num_allocated_arrays = 0;
+		static inline std::int32_t num_destroyed_arrays = 0;
+	};
+
 	template <typename T> class array
 	{
 	private:
@@ -25,7 +32,7 @@ namespace rax
 		RAX_INLINE void destroy_array()
 		{
 			// if already nullptr, no need to do stuff further
-			// // this happens only when this array was moved prior
+			// this happens only when this array was moved prior
 			// or if this array has already been destroyed manually
 			if (this->ptr_ == nullptr)
 			{
@@ -35,17 +42,18 @@ namespace rax
 			// decrement reference
 			this->decrement_ref();
 
+			// get reference counter
 			auto refcount = this->reference_num();
 
 			// if no references exists, destroy array
 			if (refcount == 0u)
 			{
-				::printf("Destroying array of size %d\n", this->size_);
-
 				::free(this->ptr_ - sizeof(std::uint8_t*));
 
 				this->ptr_ = nullptr;
 				this->size_ = 0u;
+
+				++array_debug_info::num_destroyed_arrays;
 			}
 		}
 
@@ -63,9 +71,9 @@ namespace rax
 			this->ptr_ = reinterpret_cast<std::uint8_t*>(data) + sizeof(std::uint8_t*);
 			this->size_ = size;
 
-			increment_ref();
+			this->increment_ref();
 
-			::printf("Allocation array of size %d\n", size);
+			++array_debug_info::num_allocated_arrays;
 		}
 		array(const array& other)
 		{
@@ -73,7 +81,7 @@ namespace rax
 			this->ptr_ = other.ptr_;
 			this->size_ = other.size_;
 
-			increment_ref();
+			this->increment_ref();
 		}
 		array(array&& other) noexcept
 		{
@@ -95,11 +103,12 @@ namespace rax
 				// reference count will be 0
 				this->destroy_array();
 
-				// otherwise increment reference count
+				// after that assign new pointer and size
+				// and increment reference counter
 				this->ptr_ = other.ptr_;
 				this->size_ = other.size_;
 
-				increment_ref();
+				this->increment_ref();
 			}
 
 			return *this;

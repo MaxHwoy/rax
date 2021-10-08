@@ -8,7 +8,7 @@
 #include <rax/math/math.hpp>
 #include <rax/numerics/vector/vector.hpp>
 
-auto main(__int32 argc, const char** argv) -> std::int32_t
+void test()
 {
 	auto arr = rax::array<int>(6u);
 
@@ -20,13 +20,14 @@ auto main(__int32 argc, const char** argv) -> std::int32_t
 	}
 
 	rax::array<int>::resize(arr, 8u);
+}
 
-	for (std::uint32_t i = 0u; i < arr.length(); ++i)
-	{
-		::printf("%d ", arr[i]);
-	}
+auto main(__int32 argc, const char** argv) -> std::int32_t
+{
+	test();
 
-	::printf("\n");
+	::printf("Allocated array count: %d\n", rax::array_debug_info::num_allocated_arrays);
+	::printf("Destroyed array count: %d\n", rax::array_debug_info::num_destroyed_arrays);
 
 	return 0;
 }
