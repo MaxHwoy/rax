@@ -1,15 +1,20 @@
 #include <stdafx.hpp>
 #include <cstdint>
 #include <stdio.h>
+#include <string>
 
 #include <rax/stdafx.hpp>
 #include <rax/array/array.hpp>
+#include <rax/action/action.hpp>
+#include <rax/function/function.hpp>
 #include <rax/tuple/tuple.hpp>
 #include <rax/math/math.hpp>
-#include <rax/numerics/vector/vector.hpp>
+//#include <rax/numerics/vector/vector.hpp>
 
 void test()
 {
+	auto minmax = rax::math::minmax(5, 7);
+
 	auto arr = rax::array<int>(6u);
 
 	auto fuc = arr;
