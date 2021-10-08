@@ -19,3 +19,6 @@
 #define RAX_NO_COPY(T)                      \
 	T(const T&) = delete;                   \
 	auto operator=(const T&) -> T& = delete
+
+// debug macros
+#define DEBUG_ARRAY_PRINT

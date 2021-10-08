@@ -12,6 +12,8 @@ namespace rax
 	template <typename T> class array
 	{
 	private:
+		static array empty_;
+		
 		std::uint8_t* ptr_;
 		std::uint32_t size_;
 
@@ -48,6 +50,10 @@ namespace rax
 			// if no references exists, destroy array
 			if (refcount == 0u)
 			{
+#ifdef DEBUG_ARRAY_PRINT
+				::printf("Destroying array of size %d\n", this->size_);
+#endif // !DEBUG_ARRAY_PRINT
+
 				::free(this->ptr_ - sizeof(std::uint8_t*));
 
 				this->ptr_ = nullptr;
@@ -65,6 +71,10 @@ namespace rax
 		{
 			// minimum allocation size will always be size of pointer
 			// that is used for reference counting
+
+#ifdef DEBUG_ARRAY_PRINT
+			::printf("Allocating array of size %d\n", size);
+#endif // !DEBUG_ARRAY_PRINT
 
 			auto data = ::calloc(sizeof(void*) + size * sizeof(T), 1u);
 
@@ -134,6 +144,10 @@ namespace rax
 			return this->size_;
 		}
 		
+		static auto empty() -> const array&
+		{
+			return array::empty_;
+		}
 		static void resize(array& arr, std::uint32_t new_size)
 		{
 			if (new_size != arr.size_)
@@ -159,4 +173,6 @@ namespace rax
 			}
 		}
 	};
+
+	template <typename T> array<T> array<T>::empty_ = array<T>(0u);
 }
