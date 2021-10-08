@@ -141,6 +141,38 @@ namespace rax
 		{
 			return a < b ? tuple2<T, T>(a, b) : tuple2<T, T>(b, a);
 		}
+		template <typename T> static auto minmax(T a, T b, T c) -> decltype(auto)
+		{
+			auto pair = minmax(a, b);
+			
+			return tuple2(min(c, pair.item1()), max(c, pair.item2()));
+		}
+		template <typename T> static auto minmax(T* ptr, std::uint32_t size) -> decltype(auto)
+		{
+			if (size == 0)
+			{
+				return tuple2(T{}, T{});
+			}
+
+			auto max = ptr[0];
+			auto min = max;
+			
+			for (std::uint32_t i = 1u; i < size; ++i)
+			{
+				auto value = ptr[i];
+
+				if (value < min)
+				{
+					min = value;
+				}
+				else if (value > max)
+				{
+					max = value;
+				}
+			}
+
+			return tuple2(min, max);
+		}
 
 		static auto sqrt(float value) -> float;
 	};
