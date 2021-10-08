@@ -2,17 +2,17 @@
 
 namespace rax
 {
-	class array_debug_info final
+	class refarray_debug_info final
 	{
 	public:
-		static inline std::int32_t num_allocated_arrays = 0;
-		static inline std::int32_t num_destroyed_arrays = 0;
+		static inline std::int32_t num_allocated_refarrays = 0;
+		static inline std::int32_t num_destroyed_refarrays = 0;
 	};
 
-	template <typename T> class array
+	template <typename T> class refarray
 	{
 	private:
-		static array empty_;
+		static refarray empty_;
 		
 		std::uint8_t* ptr_;
 		std::uint32_t size_;
@@ -51,7 +51,7 @@ namespace rax
 			if (refcount == 0u)
 			{
 #ifdef DEBUG_ARRAY_PRINT
-				::printf("Destroying array of size %d\n", this->size_);
+				::printf("Destroying ref array of size %d\n", this->size_);
 #endif // !DEBUG_ARRAY_PRINT
 
 				::free(this->ptr_ - sizeof(std::uint8_t*));
@@ -59,21 +59,21 @@ namespace rax
 				this->ptr_ = nullptr;
 				this->size_ = 0u;
 
-				++array_debug_info::num_destroyed_arrays;
+				++refarray_debug_info::num_destroyed_refarrays;
 			}
 		}
 
 	public:
-		array() : array(0u)
+		refarray() : refarray(0u)
 		{
 		}
-		array(std::uint32_t size)
+		refarray(std::uint32_t size)
 		{
 			// minimum allocation size will always be size of pointer
 			// that is used for reference counting
 
 #ifdef DEBUG_ARRAY_PRINT
-			::printf("Allocating array of size %d\n", size);
+			::printf("Allocating ref array of size %d\n", size);
 #endif // !DEBUG_ARRAY_PRINT
 
 			auto data = ::calloc(sizeof(void*) + size * sizeof(T), 1u);
@@ -83,9 +83,9 @@ namespace rax
 
 			this->increment_ref();
 
-			++array_debug_info::num_allocated_arrays;
+			++refarray_debug_info::num_allocated_refarrays;
 		}
-		array(const array& other)
+		refarray(const refarray& other)
 		{
 			// when copying we just increment reference
 			this->ptr_ = other.ptr_;
@@ -93,7 +93,7 @@ namespace rax
 
 			this->increment_ref();
 		}
-		array(array&& other) noexcept
+		refarray(refarray&& other) noexcept
 		{
 			// when moving we remove one reference and add one
 			// at the same time; we also assign nullptr to the
@@ -104,7 +104,7 @@ namespace rax
 			other.ptr_ = nullptr;
 			other.size_ = 0u;
 		}
-		array& operator=(const array& other)
+		refarray& operator=(const refarray& other)
 		{
 			// if we assign to itself, no need in incrementing
 			if (this != &other)
@@ -123,7 +123,7 @@ namespace rax
 
 			return *this;
 		}
-		~array()
+		~refarray()
 		{
 			this->destroy_array();
 		}
@@ -144,27 +144,27 @@ namespace rax
 			return this->size_;
 		}
 		
-		static auto empty() -> const array&
+		static auto empty() -> const refarray&
 		{
-			return array::empty_;
+			return refarray::empty_;
 		}
-		static void resize(array& arr, std::uint32_t new_size)
+		static void resize(refarray& arr, std::uint32_t new_size)
 		{
 			if (new_size != arr.size_)
 			{
 				if (new_size == 0u)
 				{
-					arr = array(0u);
+					arr = refarray(0u);
 					return;
 				}
 
 				if (arr.size_ == 0u)
 				{
-					arr = array(new_size);
+					arr = refarray(new_size);
 					return;
 				}
 
-				auto result = array(new_size);
+				auto result = refarray(new_size);
 				auto length = (new_size > arr.size_ ? arr.size_ : new_size) * sizeof(T);
 
 				::memmove(result.ptr_, arr.ptr_, length);
@@ -174,5 +174,5 @@ namespace rax
 		}
 	};
 
-	template <typename T> array<T> array<T>::empty_ = array<T>(0u);
+	template <typename T> refarray<T> refarray<T>::empty_ = refarray<T>(0u);
 }

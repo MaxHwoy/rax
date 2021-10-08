@@ -4,9 +4,7 @@
 #include <string>
 
 #include <rax/stdafx.hpp>
-#include <rax/array/array.hpp>
-#include <rax/action/action.hpp>
-#include <rax/function/function.hpp>
+#include <rax/refarray/refarray.hpp>
 #include <rax/tuple/tuple.hpp>
 #include <rax/math/math.hpp>
 //#include <rax/numerics/vector/vector.hpp>
@@ -15,7 +13,7 @@ void test()
 {
 	auto minmax = rax::math::minmax(5, 7);
 
-	auto arr = rax::array<int>(6u);
+	auto arr = rax::refarray<int>(6u);
 
 	auto fuc = arr;
 
@@ -24,11 +22,11 @@ void test()
 		arr[i] = i << 2;
 	}
 
-	rax::array<int>::resize(arr, 8u);
+	rax::refarray<int>::resize(arr, 8u);
 
-	auto sarr = rax::array<float>::empty();
+	auto sarr = rax::refarray<float>::empty();
 	
-	sarr = rax::array<float>(40u);
+	sarr = rax::refarray<float>(40u);
 }
 
 auto main(__int32 argc, const char** argv) -> std::int32_t
