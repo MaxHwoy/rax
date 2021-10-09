@@ -2,7 +2,10 @@
 
 #include <cstdint>
 #include <cassert>
+#include <memory>
+#include <algorithm>
 #include <rax/shared.hpp>
+#include <rax/action/action.hpp>
 
 namespace rax
 {
@@ -132,15 +135,25 @@ namespace rax
 			this->destroy_array();
 		}
 
+		//
+		// instance
+		//
 		RAX_INLINE auto operator[](std::int32_t index) -> T&
 		{
-			assert(0 <= index && index < this->size_);
 			return reinterpret_cast<T*>(this->ptr_)[static_cast<std::uint32_t>(index)];
 		}
 		RAX_INLINE auto operator[](std::uint32_t index) -> T&
 		{
-			assert(index < this->size_);
 			return reinterpret_cast<T*>(this->ptr_)[index];
+		}
+
+		RAX_INLINE auto get_value(std::uint32_t index) const -> const T&
+		{
+			return reinterpret_cast<T*>(this->ptr_)[index];
+		}
+		RAX_INLINE void set_value(std::uint32_t index, const T& value)
+		{
+			reinterpret_cast<T*>(this->ptr_)[index] = value;
 		}
 
 		RAX_INLINE auto length() const -> std::uint32_t
@@ -148,10 +161,171 @@ namespace rax
 			return this->size_;
 		}
 		
+		RAX_INLINE void memory_copy_to(const refarray* arr, std::uint32_t index)
+		{
+			refarray::memory_copy(this, 0u, arr, index, this->size_);
+		}
+		RAX_INLINE void value_copy_to(const refarray* arr, std::uint32_t index)
+		{
+			refarray::value_copy(this, 0u, arr, index, this->size_);
+		}
+
+		//
+		// static
+		//
+		static auto binary_search(const refarray* arr, const T& value) -> std::int32_t
+		{
+			return refarray::binary_search(arr, 0u, arr->size_, value);
+		}
+
+		static auto binary_search(const refarray* arr, std::uint32_t start, std::uint32_t length, const T& value) -> std::int32_t
+		{
+			auto end = start + length;
+
+			assert(arr != nullptr);
+			assert(end <= arr->size_);
+
+			auto middle = (start + end) >> 1;
+
+			while (start <= end)
+			{
+				const auto& ref = arr->get_value(middle);
+
+				if (value == ref)
+				{
+					return middle;
+				}
+
+				if (value < ref)
+				{
+					end = middle - 1;
+				}
+				else
+				{
+					start = middle + 1;
+				}
+
+				middle = (start + end) >> 1;
+			}
+
+			return -1;
+		}
+
+		static auto binary_search(const refarray* arr, const T& value, comparison<T> comparer) -> std::int32_t
+		{
+			return refarray::binary_search(arr, 0u, arr->size_, value, comparer);
+		}
+
+		static auto binary_search(const refarray* arr, std::uint32_t start, std::uint32_t length, const T& value, comparison<T> comparer) -> std::int32_t
+		{
+			auto end = start + length;
+			
+			assert(arr != nullptr);
+			assert(end <= arr->size_);
+
+			auto middle = (start + end) >> 1;
+
+			if (comparer == nullptr)
+			{
+				return -1;
+			}
+
+			while (start <= end)
+			{
+				auto comp = comparer(value, &arr->get_value(middle));
+
+				if (comp == 0)
+				{
+					return middle;
+				}
+
+				if (comp < 0)
+				{
+					end = middle - 1;
+				}
+				else
+				{
+					start = middle + 1;
+				}
+
+				middle = (start + end) >> 1;
+			}
+
+			return -1;
+		}
+
+		template <typename TOutput> static auto convert_all(const refarray* arr, converter<T, TOutput> convert) -> refarray<TOutput>
+		{
+			assert(arr != nullptr);
+			assert(convert != nullptr);
+
+			auto result = refarray<TOutput>(arr->size_);
+
+			for (std::uint32_t i = 0u; i < arr->size_; ++i)
+			{
+				result.set_value(i, convert(&arr->get_value(i)));
+			}
+
+			return result;
+		}
+
 		static auto empty() -> const refarray&
 		{
 			return refarray::empty_;
 		}
+		
+		static bool exists(const refarray* arr, predicate<T> match)
+		{
+			return refarray::find_index(arr, 0u, arr.size_, match) != -1;
+		}
+
+		// FILL
+
+		// FIND
+
+		static auto find_index(const refarray* arr, predicate<T> match) -> std::int32_t
+		{
+			return refarray::find_index(arr, 0u, arr->size_, match);
+		}
+
+		static auto find_index(const refarray* arr, std::uint32_t start, predicate<T> match) -> std::int32_t
+		{
+			return refarray::find_index(arr, start, arr->size_, match);
+		}
+
+		static auto find_index(const refarray* arr, std::uint32_t start, std::uint32_t length, predicate<T> match) -> std::int32_t
+		{
+			auto end = start + length;
+
+			assert(arr != nullptr);
+			assert(match != nullptr);
+			assert(end <= arr->size_);
+
+			for (std::uint32_t i = start; i < end; ++i)
+			{
+				if (match(&arr->get_value(i)))
+				{
+					return i;
+				}
+			}
+
+			return -1;
+		}
+
+		static void memory_copy(const refarray* src_array, const refarray* dest_array, std::uint32_t length)
+		{
+			refarray::memory_copy(src_array, 0u, dest_array, 0u, length);
+		}
+
+		static void memory_copy(const refarray* src_array, std::uint32_t src_index, const refarray* dest_array, std::uint32_t dest_index, std::uint32_t length)
+		{
+			assert(src_array != nullptr && dest_array != nullptr);
+			assert(src_index + length <= src_array->size_);
+			assert(dest_index + length <= dest_array->size_);
+
+			::memmove(dest_array->ptr_ + dest_index * sizeof(T), src_array->ptr_ + src_index * sizeof(T), length * sizeof(T));
+		}
+
 		static void resize(refarray& arr, std::uint32_t new_size)
 		{
 			if (new_size != arr.size_)
@@ -174,6 +348,23 @@ namespace rax
 				::memmove(result.ptr_, arr.ptr_, length);
 
 				arr = result;
+			}
+		}
+
+		static void value_copy(const refarray* src_array, const refarray* dest_array, std::uint32_t length)
+		{
+			refarray::value_copy(src_array, 0u, dest_array, 0u, length);
+		}
+		
+		static void value_copy(const refarray* src_array, std::uint32_t src_index, const refarray* dest_array, std::uint32_t dest_index, std::uint32_t length)
+		{
+			assert(src_array != nullptr && dest_array != nullptr);
+			assert(src_index + length <= src_array->size_);
+			assert(dest_index + length <= dest_array->size_);
+
+			for (std::uint32_t i = 0u; i < length; ++i)
+			{
+				dest_array->set_value(i + dest_index, src_array->get_value(i + src_index));
 			}
 		}
 	};

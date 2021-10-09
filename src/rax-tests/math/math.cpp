@@ -3,7 +3,7 @@
 
 namespace rax::tests
 {
-	TEST(math, abs)
+	TEST(rax_math, abs)
 	{
 		EXPECT_EQ(5.0f, rax::math::abs<float>(-5.0f));
 		
@@ -12,7 +12,7 @@ namespace rax::tests
 		EXPECT_NE(-100, rax::math::abs<std::int32_t>(-100));
 	}
 
-	TEST(math, max)
+	TEST(rax_math, max)
 	{
 		EXPECT_EQ(4, rax::math::max(2, 4));
 		EXPECT_EQ(4, rax::math::max(4, 2));
@@ -27,7 +27,7 @@ namespace rax::tests
 		EXPECT_EQ(100, rax::math::max<std::int32_t>(4u, 38, 59, 20, 100));
 	}
 
-	TEST(math, min)
+	TEST(rax_math, min)
 	{
 		EXPECT_EQ(2, rax::math::min(2, 4));
 		EXPECT_EQ(2, rax::math::min(4, 2));
@@ -42,7 +42,7 @@ namespace rax::tests
 		EXPECT_EQ(20, rax::math::min<std::int32_t>(4u, 38, 59, 20, 100));
 	}
 
-	TEST(math, minmax)
+	TEST(rax_math, minmax)
 	{
 		auto minmax1 = rax::math::minmax(2.0f, 4.0f);
 		auto minmax2 = rax::math::minmax(4.0f, 2.0f);
@@ -82,7 +82,7 @@ namespace rax::tests
 		EXPECT_EQ(9, minmax9.item2());
 	}
 
-	TEST(math, sqrt)
+	TEST(rax_math, sqrt)
 	{
 		EXPECT_NEAR(std::sqrtf(25.0f), rax::math::sqrt(25.0f), 0.00001f);
 		EXPECT_NEAR(std::sqrtf(39.0f), rax::math::sqrt(39.0f), 0.00001f);

@@ -15,4 +15,4 @@
 	auto operator=(const T&) -> T& = delete
 
 // debug macros
-#define DEBUG_ARRAY_PRINT
+// #define DEBUG_ARRAY_PRINT
