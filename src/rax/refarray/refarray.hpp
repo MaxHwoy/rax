@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <rax/shared.hpp>
 #include <rax/action/action.hpp>
+#include <rax/arraysort/arraysort.hpp>
 
 namespace rax
 {
@@ -349,6 +350,52 @@ namespace rax
 
 				arr = result;
 			}
+		}
+
+		
+		// SORTS
+		static void sort(const refarray* arr)
+		{
+			refarray::sort(arr, 0u, arr->size_);
+		}
+
+		static void sort(const refarray* arr, comparison<T> comparer)
+		{
+			refarray::sort(arr, 0u, arr->size_, comparer);
+		}
+
+		static void sort(const refarray* arr, std::uint32_t start, std::uint32_t length)
+		{
+			if (length <= 1)
+			{
+				return; // why would we need to sort arrays of 0 or 1 elements?
+			}
+
+			auto end = start + length;
+
+			assert(arr != nullptr);
+			assert(end <= arr->size_);
+
+			auto ptr = reinterpret_cast<T*>(arr->ptr_);
+
+			arraysort<T>::introspective_sort(ptr, start, length);
+		}
+
+		static void sort(const refarray* arr, std::uint32_t start, std::uint32_t length, comparison<T> comparer)
+		{
+			if (length <= 1)
+			{
+				return; // why would we need to sort arrays of 0 or 1 elements?
+			}
+
+			auto end = start + length;
+
+			assert(arr != nullptr);
+			assert(end <= arr->size_);
+
+			auto ptr = reinterpret_cast<T*>(arr->ptr_);
+
+			arraysort<T>::introspective_sort(ptr, start, length, comparer);
 		}
 
 		static void value_copy(const refarray* src_array, const refarray* dest_array, std::uint32_t length)

@@ -37,4 +37,39 @@ namespace rax::tests
 
 		EXPECT_EQ(size, to.length());
 	}
+
+
+
+
+	TEST(rax_refarray, sort)
+	{
+		const auto size = 20u; // #TODO = random too
+	
+		std::srand(std::time(nullptr));
+	
+		auto arr = rax::refarray<std::int32_t>(size);
+	
+		for (std::uint32_t i = 0u; i < size; ++i)
+		{
+			arr[i] = std::rand();
+		}
+	
+		rax::refarray<std::int32_t>::sort(&arr, [](const std::int32_t* a, const std::int32_t* b) -> std::int32_t
+		{
+			return *a == *b ? 0 : *a < *b ? 1 : -1;
+		});
+
+		auto valid = true;
+
+		for (std::uint32_t i = 1u; i < size; ++i)
+		{
+			if (arr[i - 1] < arr[i])
+			{
+				valid = false;
+				break;
+			}
+		}
+
+		EXPECT_TRUE(valid);
+	}
 }
