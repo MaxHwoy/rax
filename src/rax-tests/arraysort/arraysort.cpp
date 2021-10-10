@@ -83,20 +83,6 @@ namespace rax::tests
 		forward(arr_fo, 0u, size_fo);
 		reverse(arr_re, 0u, size_re, &reverse_compare);
 
-		//for (std::uint32_t i = 0u; i < size_fo; ++i)
-		//{
-		//	::printf("[%d] ", arr_fo[i]);
-		//}
-		//
-		//::printf("\n");
-		//
-		//for (std::uint32_t i = 0u; i < size_re; ++i)
-		//{
-		//	::printf("[%d] ", arr_re[i]);
-		//}
-		//
-		//::printf("\n");
-
 		EXPECT_TRUE(check_increasing<T>(arr_fo, size_fo));
 		EXPECT_TRUE(check_decreasing<T>(arr_re, size_re));
 
@@ -117,5 +103,20 @@ namespace rax::tests
 	TEST(rax_arraysort, heap_sort)
 	{
 		perform_sort_test<std::int32_t>(&rax::arraysort<std::int32_t>::heap_sort, &rax::arraysort<std::int32_t>::heap_sort);
+	}
+
+	TEST(rax_arraysort, quick_sort)
+	{
+		perform_sort_test<std::int32_t>(&rax::arraysort<std::int32_t>::quick_sort, &rax::arraysort<std::int32_t>::quick_sort);
+	}
+
+	TEST(rax_arraysort, selection_sort)
+	{
+		perform_sort_test<std::int32_t>(&rax::arraysort<std::int32_t>::selection_sort, &rax::arraysort<std::int32_t>::selection_sort);
+	}
+
+	TEST(rax_arraysort, bubble_sort)
+	{
+		perform_sort_test<std::int32_t>(&rax::arraysort<std::int32_t>::bubble_sort, &rax::arraysort<std::int32_t>::bubble_sort);
 	}
 }

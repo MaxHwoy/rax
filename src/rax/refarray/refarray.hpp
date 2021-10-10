@@ -157,6 +157,15 @@ namespace rax
 			reinterpret_cast<T*>(this->ptr_)[index] = value;
 		}
 
+		RAX_INLINE auto start() -> T*
+		{
+			return reinterpret_cast<T*>(this->ptr_);
+		}
+		RAX_INLINE auto end() -> T*
+		{
+			return reinterpret_cast<T*>(this->ptr_) + this->size_;
+		}
+
 		RAX_INLINE auto length() const -> std::uint32_t
 		{
 			return this->size_;

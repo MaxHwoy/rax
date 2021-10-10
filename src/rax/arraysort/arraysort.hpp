@@ -354,6 +354,163 @@ namespace rax
             }
         }
 
+        static void internal_quick_sort(T* ptr, std::int32_t left, std::int32_t right, std::uint32_t maxdepth)
+        {
+            do
+            {
+                if (maxdepth == 0)
+                {
+                    arraysort::internal_heap_sort(ptr, left, right);
+                    return;
+                }
+
+                std::int32_t num = left;
+                std::int32_t num2 = right;
+                std::int32_t num3 = num + ((num2 - num) >> 1);
+
+                arraysort::swap_if_greater(ptr, num, num3);
+                arraysort::swap_if_greater(ptr, num, num2);
+                arraysort::swap_if_greater(ptr, num3, num2);
+
+                auto value = ptr[num3];
+
+                while (true)
+                {
+                    if (ptr[num] < value)
+                    {
+                        ++num;
+                        continue;
+                    }
+
+                    while (value < ptr[num2])
+                    {
+                        --num2;
+                    }
+
+                    if (num > num2)
+                    {
+                        break;
+                    }
+
+                    if (num < num2)
+                    {
+                        auto temp = ptr[num];
+
+                        ptr[num] = ptr[num2];
+                        ptr[num2] = temp;
+                    }
+
+                    ++num;
+                    --num2;
+
+                    if (num > num2)
+                    {
+                        break;
+                    }
+                }
+
+                --maxdepth;
+
+                if (num2 - left <= right - num)
+                {
+                    if (left < num2)
+                    {
+                        arraysort::internal_quick_sort(ptr, left, num2, maxdepth);
+                    }
+
+                    left = num;
+                }
+                else
+                {
+                    if (num < right)
+                    {
+                        arraysort::internal_quick_sort(ptr, num, right, maxdepth);
+                    }
+
+                    right = num2;
+                }
+
+            } while (left < right);
+        }
+        static void internal_quick_sort(T* ptr, std::int32_t left, std::int32_t right, std::uint32_t maxdepth, comparison<T> comparer)
+        {
+            do
+            {
+                if (maxdepth == 0)
+                {
+                    arraysort::internal_heap_sort(ptr, left, right, comparer);
+                    return;
+                }
+
+                std::int32_t num = left;
+                std::int32_t num2 = right;
+                std::int32_t num3 = num + ((num2 - num) >> 1);
+
+                arraysort::swap_if_greater(ptr, num, num3, comparer);
+                arraysort::swap_if_greater(ptr, num, num2, comparer);
+                arraysort::swap_if_greater(ptr, num3, num2, comparer);
+
+                auto value = ptr[num3];
+
+                while (true)
+                {
+                    if (comparer(ptr + num, &value) < 0)
+                    {
+                        ++num;
+                        continue;
+                    }
+
+                    while (comparer(&value, ptr + num2) < 0)
+                    {
+                        --num2;
+                    }
+
+                    if (num > num2)
+                    {
+                        break;
+                    }
+
+                    if (num < num2)
+                    {
+                        auto temp = ptr[num];
+
+                        ptr[num] = ptr[num2];
+                        ptr[num2] = temp;
+                    }
+
+                    ++num;
+                    --num2;
+
+                    if (num > num2)
+                    {
+                        break;
+                    }
+                }
+
+                --maxdepth;
+
+                if (num2 - left <= right - num)
+                {
+                    if (left < num2)
+                    {
+                        arraysort::internal_quick_sort(ptr, left, num2, maxdepth, comparer);
+                    }
+
+                    left = num;
+                }
+                else
+                {
+                    if (num < right)
+                    {
+                        arraysort::internal_quick_sort(ptr, num, right, maxdepth, comparer);
+                    }
+
+                    right = num2;
+                }
+
+            } while (left < right);
+        }
+
 	public:
         static void introspective_sort(T* ptr, std::uint32_t start, std::uint32_t length)
         {
@@ -409,20 +566,11 @@ namespace rax
 
         static void quick_sort(T* ptr, std::uint32_t start, std::uint32_t length)
         {
-            arraysort::quick_sort_depth(ptr, start, length, 0x20);
+            arraysort::internal_quick_sort(ptr, start, start + length - 1u, 0x20);
         }
         static void quick_sort(T* ptr, std::uint32_t start, std::uint32_t length, comparison<T> comparer)
         {
-            arraysort::quick_sort_depth(ptr, start, length, 0x20);
-        }
-
-        static void quick_sort_depth(T* ptr, std::uint32_t start, std::uint32_t length, std::uint32_t maxdepth)
-        {
-
-        }
-        static void quick_sort_depth(T* ptr, std::uint32_t start, std::uint32_t length, std::uint32_t maxdepth, comparison<T> comparer)
-        {
-
+            arraysort::internal_quick_sort(ptr, start, start + length - 1u, 0x20, comparer);
         }
 
         static void merge_sort(T* ptr, std::uint32_t start, std::uint32_t length)
@@ -436,20 +584,102 @@ namespace rax
 
         static void selection_sort(T* ptr, std::uint32_t start, std::uint32_t length)
         {
+            auto end = start + length;
 
+            for (std::uint32_t i = start; i < end - 1u; ++i)
+            {
+                auto min = i;
+
+                for (std::uint32_t j = i + 1u; j < end; ++j)
+                {
+                    if (ptr[j] < ptr[min])
+                    {
+                        min = j;
+                    }
+                }
+
+                auto temp = ptr[i];
+
+                ptr[i] = ptr[min];
+                ptr[min] = temp;
+            }
         }
         static void selection_sort(T* ptr, std::uint32_t start, std::uint32_t length, comparison<T> comparer)
         {
+            auto end = start + length;
 
+            for (std::uint32_t i = start; i < end - 1u; ++i)
+            {
+                auto min = i;
+
+                for (std::uint32_t j = i + 1u; j < end; ++j)
+                {
+                    if (comparer(ptr + j, ptr + min) < 0)
+                    {
+                        min = j;
+                    }
+                }
+
+                auto temp = ptr[i];
+
+                ptr[i] = ptr[min];
+                ptr[min] = temp;
+            }
         }
 
         static void bubble_sort(T* ptr, std::uint32_t start, std::uint32_t length)
         {
+            auto end = start + length - 1u;
 
+            for (std::uint32_t i = start; i < end; ++i)
+            {
+                bool swapped = false;
+
+                for (std::uint32_t j = 0u; j < end - i; ++j)
+                {
+                    if (ptr[j] > ptr[j + 1])
+                    {
+                        auto temp = ptr[j];
+
+                        ptr[j] = ptr[j + 1];
+                        ptr[j + 1] = temp;
+
+                        swapped = true;
+                    }
+                }
+
+                if (!swapped)
+                {
+                    break;
+                }
+            }
         }
         static void bubble_sort(T* ptr, std::uint32_t start, std::uint32_t length, comparison<T> comparer)
         {
+            auto end = start + length - 1u;
 
+            for (std::uint32_t i = start; i < end; ++i)
+            {
+                bool swapped = false;
+
+                for (std::uint32_t j = 0u; j < end - i; ++j)
+                {
+                    if (comparer(ptr + j, ptr + j + 1u) > 0)
+                    {
+                        auto temp = ptr[j];
+
+                        ptr[j] = ptr[j + 1];
+                        ptr[j + 1] = temp;
+
+                        swapped = true;
+                    }
+                }
+
+                if (!swapped)
+                {
+                    break;
+                }
+            }
         }
     };
 }

@@ -2,22 +2,7 @@
 
 void test()
 {
-	auto minmax = rax::math::minmax(5, 7);
 
-	auto arr = rax::refarray<int>(6u);
-
-	auto fuc = arr;
-
-	for (std::uint32_t i = 0u; i < 6u; ++i)
-	{
-		arr[i] = i << 2;
-	}
-
-	rax::refarray<int>::resize(arr, 8u);
-
-	auto sarr = rax::refarray<float>::empty();
-	
-	sarr = rax::refarray<float>(40u);
 }
 
 auto main(__int32 argc, const char** argv) -> std::int32_t

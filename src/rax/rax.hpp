@@ -1,6 +1,10 @@
 #ifndef RAX_HPP
 #define RAX_HPP
 
+// main
+#include <rax/shared.hpp>
+#include <rax/time/time.hpp>
+
 // functional
 #include <rax/action/action.hpp>
 #include <rax/function/function.hpp>
