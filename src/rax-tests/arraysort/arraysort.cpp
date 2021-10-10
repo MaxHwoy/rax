@@ -110,6 +110,11 @@ namespace rax::tests
 		perform_sort_test<std::int32_t>(&rax::arraysort<std::int32_t>::quick_sort, &rax::arraysort<std::int32_t>::quick_sort);
 	}
 
+	TEST(rax_arraysort, merge_sort)
+	{
+		perform_sort_test<std::int32_t>(&rax::arraysort<std::int32_t>::merge_sort, &rax::arraysort<std::int32_t>::merge_sort);
+	}
+
 	TEST(rax_arraysort, selection_sort)
 	{
 		perform_sort_test<std::int32_t>(&rax::arraysort<std::int32_t>::selection_sort, &rax::arraysort<std::int32_t>::selection_sort);

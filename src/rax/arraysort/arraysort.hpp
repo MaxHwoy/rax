@@ -173,6 +173,101 @@ namespace rax
             ptr[lo + i - 1] = value;
         }
 
+        static void internal_merge_down(T* ptr, std::uint32_t lo, std::uint32_t me, std::uint32_t hi)
+        {
+            auto nl = me - lo + 1u;
+            auto nr = hi - me;
+
+            auto larr = new T[nl];
+            auto rarr = new T[nr];
+
+            for (std::uint32_t i = 0; i < nl; ++i)
+            {
+                larr[i] = ptr[lo + i];
+            }
+
+            for (std::uint32_t i = 0; i < nr; ++i)
+            {
+                rarr[i] = ptr[me + 1 + i];
+            }
+
+            std::uint32_t le = 0u;
+            std::uint32_t ri = 0u;
+            std::uint32_t in = lo;
+
+            while (le < nl && ri < nr)
+            {
+                if (larr[le] <= rarr[ri])
+                {
+                    ptr[in++] = larr[le++];
+                }
+                else
+                {
+                    ptr[in++] = rarr[ri++];
+                }
+            }
+
+            while (le < nl)
+            {
+                ptr[in++] = larr[le++];
+            }
+
+            while (ri < nr)
+            {
+                ptr[in++] = rarr[ri++];
+            }
+
+            delete[] larr;
+            delete[] rarr;
+        }
+        static void internal_merge_down(T* ptr, std::uint32_t lo, std::uint32_t me, std::uint32_t hi, comparison<T> comparer)
+        {
+            const auto nl = me - lo + 1u;
+            const auto nr = hi - me;
+
+            auto larr = new T[nl];
+            auto rarr = new T[nr];
+
+            for (std::uint32_t i = 0; i < nl; ++i)
+            {
+                larr[i] = ptr[lo + i];
+            }
+
+            for (std::uint32_t i = 0; i < nr; ++i)
+            {
+                rarr[i] = ptr[me + 1 + i];
+            }
+
+            std::uint32_t le = 0u;
+            std::uint32_t ri = 0u;
+            std::uint32_t in = lo;
+
+            while (le < nl && ri < nr)
+            {
+                if (comparer(larr + le, rarr + ri) <= 0)
+                {
+                    ptr[in++] = larr[le++];
+                }
+                else
+                {
+                    ptr[in++] = rarr[ri++];
+                }
+            }
+
+            while (le < nl)
+            {
+                ptr[in++] = larr[le++];
+            }
+
+            while (ri < nr)
+            {
+                ptr[in++] = rarr[ri++];
+            }
+
+            delete[] larr;
+            delete[] rarr;
+        }
+
         static void internal_intro_sort(T* ptr, std::uint32_t lo, std::uint32_t hi, std::uint32_t maxdepth)
         {
             while (hi > lo)
@@ -511,6 +606,31 @@ namespace rax
             } while (left < right);
         }
 
+        static void internal_merge_sort(T* ptr, std::uint32_t lo, std::uint32_t hi)
+        {
+            if (lo < hi)
+            {
+                std::uint32_t me = lo + ((hi - lo) >> 1u);
+
+                arraysort::internal_merge_sort(ptr, lo, me);
+                arraysort::internal_merge_sort(ptr, me + 1u, hi);
+
+                arraysort::internal_merge_down(ptr, lo, me, hi);
+            }
+        }
+        static void internal_merge_sort(T* ptr, std::uint32_t lo, std::uint32_t hi, comparison<T> comparer)
+        {
+            if (lo < hi)
+            {
+                std::uint32_t me = lo + ((hi - lo) >> 1u);
+
+                arraysort::internal_merge_sort(ptr, lo, me, comparer);
+                arraysort::internal_merge_sort(ptr, me + 1u, hi, comparer);
+
+                arraysort::internal_merge_down(ptr, lo, me, hi, comparer);
+            }
+        }
+
 	public:
         static void introspective_sort(T* ptr, std::uint32_t start, std::uint32_t length)
         {
@@ -575,11 +695,11 @@ namespace rax
 
         static void merge_sort(T* ptr, std::uint32_t start, std::uint32_t length)
         {
-
+            arraysort::internal_merge_sort(ptr, start, start + length - 1u);
         }
         static void merge_sort(T* ptr, std::uint32_t start, std::uint32_t length, comparison<T> comparer)
         {
-
+            arraysort::internal_merge_sort(ptr, start, start + length - 1u, comparer);
         }
 
         static void selection_sort(T* ptr, std::uint32_t start, std::uint32_t length)
