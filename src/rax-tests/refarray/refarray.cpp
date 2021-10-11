@@ -12,8 +12,8 @@ namespace rax::tests
 			arr[i] = i << 3;
 		}
 
-		auto index1 = rax::refarray<std::int32_t>::binary_search(&arr, 35u << 3);
-		auto index2 = rax::refarray<std::int32_t>::binary_search(&arr, 52u << 3);
+		auto index1 = rax::refarray<std::int32_t>::binary_search(arr, 35u << 3);
+		auto index2 = rax::refarray<std::int32_t>::binary_search(arr, 52u << 3);
 
 		EXPECT_EQ(index1, 35);
 		EXPECT_EQ(index2, -1);
@@ -30,7 +30,7 @@ namespace rax::tests
 			from[i] = size << 2;
 		}
 	
-		auto to = rax::refarray<std::int32_t>::convert_all<float>(&from, [](const std::int32_t* value) -> float
+		auto to = rax::refarray<std::int32_t>::convert_all<float>(from, [](const std::int32_t* value) -> float
 		{
 			return (float)*value;
 		});
@@ -54,7 +54,7 @@ namespace rax::tests
 			arr[i] = std::rand();
 		}
 	
-		rax::refarray<std::int32_t>::sort(&arr, [](const std::int32_t* a, const std::int32_t* b) -> std::int32_t
+		rax::refarray<std::int32_t>::sort(arr, [](const std::int32_t* a, const std::int32_t* b) -> std::int32_t
 		{
 			return *a == *b ? 0 : *a < *b ? 1 : -1;
 		});
