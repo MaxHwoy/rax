@@ -8,6 +8,8 @@
 #include <rax/action/action.hpp>
 #include <rax/arraysort/arraysort.hpp>
 
+#pragma warning (disable: 6011)
+
 namespace rax
 {
 	class refarray_debug_info final

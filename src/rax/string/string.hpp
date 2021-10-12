@@ -14,24 +14,20 @@ namespace rax
 	private:
 #ifdef TARGET_64BIT
 		// on 64 bit platforms ptr_ will take 8 bytes of memory, so for
-		// alignment purposes we limit the internal buffer to 0x12 char16s
-		// to make the total size of (0x12 * 2) + 0x08 + 0x04 = 0x30 bytes
-		static inline const std::uint32_t kmax_buffer_size = 0x12;
+		// alignment purposes we limit the internal buffer to 0x14 char16s
+		// to make the total size of 0x14 + 0x08 + 0x04 = 0x20 bytes
+		static inline const std::uint32_t kmax_buffer_size = 0x14;
 #else
 		// on 32 bit platforms ptr_ will take 4 bytes of memory, so with
-		// alignment of 0x30 bytes we can take the internal buffer to be of
-		// size 0x14, which is 2 char16s bigger than on x64 platforms
-		static inline const std::uint32_t kmax_buffer_size = 0x14;
+		// alignment of 0x20 bytes we can take the internal buffer to be of
+		// size 0x18, which is 4 chars bigger than on x64 platforms
+		static inline const std::uint32_t kmax_buffer_size = 0x18;
 #endif // TARGET_64BIT
 
-		// by default we store strings in unicode/utf16 encoding;
-		// this is because it is a widely accepted encoding that
-		// is easily converted to and from other encoding formats
-		// note that we use char16_t instead of wchar_t b/c the
-		// latter one is defined as 32 bits on Unix systems
-		char16_t* ptr_;
+		// by default we store strings in unicode/utf8 encoding
+		char* ptr_;
 		std::uint32_t length_;
-		char16_t buffer_[kmax_buffer_size];
+		char buffer_[kmax_buffer_size];
 
 	public:
 		string(const char* ptr);
@@ -71,12 +67,12 @@ namespace rax
 			}
 		}
 
-		RAX_INLINE auto operator[](std::uint32_t index) const -> char16_t
+		RAX_INLINE auto operator[](std::uint32_t index) const -> char
 		{
 			assert(index < this->length_);
 			return this->ptr_[index];
 		}
-		RAX_INLINE auto operator[](std::int32_t index) const -> char16_t
+		RAX_INLINE auto operator[](std::int32_t index) const -> char
 		{
 			assert(static_cast<std::uint32_t>(index) < this->length_);
 			return this->ptr_[index];
@@ -85,7 +81,7 @@ namespace rax
 		{
 			return this->length_;
 		}
-		RAX_INLINE auto as_native() const -> const char16_t*
+		RAX_INLINE auto as_native() const -> const char*
 		{
 			return this->ptr_;
 		}

@@ -19,204 +19,170 @@ namespace rax
 		if (this->length_ > string::kmax_buffer_size)
 		{
 			auto align = rax::math::align_pow_2(this->length_, 0x04u);
-			this->ptr_ = new char16_t[align];
+			this->ptr_ = new char[align];
 		}
 		else
 		{
 			this->ptr_ = this->buffer_;
 		}
 
-		// cannot do memcpy, do for-loop iteration instead
-		for (std::uint32_t i = 0u; i < this->length_; ++i)
-		{
-			this->ptr_[i] = ptr[i];
-		}
+		::memcpy(this->ptr_, ptr, this->length_);
 	}
 
 	string::string(const wchar_t* ptr)
 	{
-		this->length_ = rax::text::strex::strlen(ptr, false);
+		std::int32_t length;
+
+#ifdef _HAS_CXX17
+		if constexpr (sizeof(wchar_t) == sizeof(char16_t))
+		{
+			auto ptr16 = reinterpret_cast<const char16_t*>(ptr);
+			length = rax::text::decoder::utf16_to_utf8_string(ptr16, nullptr);
+		}
+		else
+		{
+			auto ptr32 = reinterpret_cast<const char32_t*>(ptr);
+			length = rax::text::decoder::utf32_to_utf8_string(ptr32, nullptr);
+		}
+#else
+		if (sizeof(wchar_t) == sizeof(char16_t))
+		{
+			auto ptr16 = reinterpret_cast<const char16_t*>(ptr);
+			length = rax::text::decoder::utf16_to_utf8_string(ptr16, nullptr);
+		}
+		else
+		{
+			auto ptr32 = reinterpret_cast<const char32_t*>(ptr);
+			length = rax::text::decoder::utf32_to_utf8_string(ptr32, nullptr);
+		}
+#endif
+
+		if (length == -1)
+		{
+			this->length_ = 0u;
+			this->ptr_ = this->buffer_;
+			return;
+		}
+
+		this->length_ = static_cast<std::uint32_t>(length);
 
 		if (this->length_ > string::kmax_buffer_size)
 		{
 			auto align = rax::math::align_pow_2(this->length_, 0x04u);
-			this->ptr_ = new char16_t[align];
+			this->ptr_ = new char[align];
 		}
 		else
 		{
 			this->ptr_ = this->buffer_;
 		}
 
-#if defined(_HAS_CXX17)
+#ifdef _HAS_CXX17
 		if constexpr (sizeof(wchar_t) == sizeof(char16_t))
 		{
-			// if wchar_t size is 2 bytes, go ahead and do memcpy
-			::memcpy(this->ptr_, ptr, this->length_ * sizeof(char16_t));
+			auto ptr16 = reinterpret_cast<const char16_t*>(ptr);
+			rax::text::decoder::utf16_to_utf8_string(ptr16, this->ptr_);
 		}
 		else
 		{
-			// otherwise we have no option other than for-looping
-			for (std::uint32_t i = 0u; i < this->length_; ++i)
-			{
-				this->ptr_[i] = static_cast<char16_t>(ptr[i]);
-			}
+			auto ptr32 = reinterpret_cast<const char32_t*>(ptr);
+			rax::text::decoder::utf32_to_utf8_string(ptr32, this->ptr_);
 		}
 #else
 		if (sizeof(wchar_t) == sizeof(char16_t))
 		{
-			// if wchar_t size is 2 bytes, go ahead and do memcpy
-			::memcpy(this->ptr_, ptr, this->length_ * sizeof(char16_t));
+			auto ptr16 = reinterpret_cast<const char16_t*>(ptr);
+			rax::text::decoder::utf16_to_utf8_string(ptr16, this->ptr_);
 		}
 		else
 		{
-			// otherwise we have no option other than for-looping
-			for (std::uint32_t i = 0u; i < this->length_; ++i)
-			{
-				this->ptr_[i] = static_cast<char16_t>(ptr[i]);
-			}
+			auto ptr32 = reinterpret_cast<const char32_t*>(ptr);
+			rax::text::decoder::utf32_to_utf8_string(ptr32, this->ptr_);
 		}
 #endif
 	}
 
 	string::string(const char16_t* ptr)
 	{
-		this->length_ = rax::text::strex::strlen(ptr, false);
+		auto length = rax::text::decoder::utf16_to_utf8_string(ptr, nullptr);
+
+		if (length == -1)
+		{
+			this->length_ = 0u;
+			this->ptr_ = this->buffer_;
+			return;
+		}
+
+		this->length_ = static_cast<std::uint32_t>(length);
 
 		if (this->length_ > string::kmax_buffer_size)
 		{
 			auto align = rax::math::align_pow_2(this->length_, 0x04u);
-			this->ptr_ = new char16_t[align];
+			this->ptr_ = new char[align];
 		}
 		else
 		{
 			this->ptr_ = this->buffer_;
 		}
 
-		::memcpy(this->ptr_, ptr, this->length_ * sizeof(char16_t));
+		rax::text::decoder::utf16_to_utf8_string(ptr, this->ptr_);
 	}
 
 	string::string(const char32_t* ptr)
 	{
-		this->length_ = rax::text::strex::strlen(ptr, false);
+		auto length = rax::text::decoder::utf32_to_utf8_string(ptr, nullptr);
+
+		if (length == -1)
+		{
+			this->length_ = 0u;
+			this->ptr_ = this->buffer_;
+			return;
+		}
+
+		this->length_ = static_cast<std::uint32_t>(length);
 
 		if (this->length_ > string::kmax_buffer_size)
 		{
 			auto align = rax::math::align_pow_2(this->length_, 0x04u);
-			this->ptr_ = new char16_t[align];
+			this->ptr_ = new char[align];
 		}
 		else
 		{
 			this->ptr_ = this->buffer_;
 		}
 
-		// cannot do memcpy, do for-loop iteration instead
-		for (std::uint32_t i = 0u; i < this->length_; ++i)
-		{
-			this->ptr_[i] = static_cast<char16_t>(ptr[i]);
-		}
+		rax::text::decoder::utf32_to_utf8_string(ptr, this->ptr_);
 	}
 
 	string::string(const char* ptr, std::uint32_t start, std::uint32_t length)
 	{
-		this->length_ = length;
+		this->length_ = length + 1u;
 
 		if (this->length_ > string::kmax_buffer_size)
 		{
 			auto align = rax::math::align_pow_2(this->length_, 0x04u);
-			this->ptr_ = new char16_t[align];
+			this->ptr_ = new char[align];
 		}
 		else
 		{
 			this->ptr_ = this->buffer_;
 		}
 
-		// cannot do memcpy, do for-loop iteration instead
-		for (std::uint32_t i = 0u; i < this->length_; ++i)
-		{
-			this->ptr_[i] = ptr[i];
-		}
+		::memcpy(this->ptr_, ptr, length);
+		this->ptr_[length] = 0u;
 	}
 
 	string::string(const wchar_t* ptr, std::uint32_t start, std::uint32_t length)
 	{
-		this->length_ = length;
 
-		if (this->length_ > string::kmax_buffer_size)
-		{
-			auto align = rax::math::align_pow_2(this->length_, 0x04u);
-			this->ptr_ = new char16_t[align];
-		}
-		else
-		{
-			this->ptr_ = this->buffer_;
-		}
-
-#if defined(_HAS_CXX17)
-		if constexpr (sizeof(wchar_t) == sizeof(char16_t))
-		{
-			// if wchar_t size is 2 bytes, go ahead and do memcpy
-			::memcpy(this->ptr_, ptr, this->length_ * sizeof(char16_t));
-		}
-		else
-		{
-			// otherwise we have no option other than for-looping
-			for (std::uint32_t i = 0u; i < this->length_; ++i)
-			{
-				this->ptr_[i] = static_cast<char16_t>(ptr[i]);
-			}
-		}
-#else
-		if (sizeof(wchar_t) == sizeof(char16_t))
-		{
-			// if wchar_t size is 2 bytes, go ahead and do memcpy
-			::memcpy(this->ptr_, ptr, this->length_ * sizeof(char16_t));
-		}
-		else
-		{
-			// otherwise we have no option other than for-looping
-			for (std::uint32_t i = 0u; i < this->length_; ++i)
-			{
-				this->ptr_[i] = static_cast<char16_t>(ptr[i]);
-			}
-		}
-#endif
 	}
 
 	string::string(const char16_t* ptr, std::uint32_t start, std::uint32_t length)
 	{
-		this->length_ = length;
 
-		if (this->length_ > string::kmax_buffer_size)
-		{
-			auto align = rax::math::align_pow_2(this->length_, 0x04u);
-			this->ptr_ = new char16_t[align];
-		}
-		else
-		{
-			this->ptr_ = this->buffer_;
-		}
-
-		::memcpy(this->ptr_, ptr, this->length_ * sizeof(char16_t));
 	}
 
 	string::string(const char32_t* ptr, std::uint32_t start, std::uint32_t length)
 	{
-		this->length_ = length;
 
-		if (this->length_ > string::kmax_buffer_size)
-		{
-			auto align = rax::math::align_pow_2(this->length_, 0x04u);
-			this->ptr_ = new char16_t[align];
-		}
-		else
-		{
-			this->ptr_ = this->buffer_;
-		}
-
-		// cannot do memcpy, do for-loop iteration instead
-		for (std::uint32_t i = 0u; i < this->length_; ++i)
-		{
-			this->ptr_[i] = static_cast<char16_t>(ptr[i]);
-		}
 	}
 }
