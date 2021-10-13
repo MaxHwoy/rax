@@ -12,6 +12,27 @@ namespace rax::tests
 		EXPECT_NE(-100, rax::math::abs<std::int32_t>(-100));
 	}
 
+	TEST(rax_math, is_prime)
+	{
+		EXPECT_TRUE(rax::math::is_prime(2u));
+		EXPECT_TRUE(rax::math::is_prime(3u));
+		EXPECT_TRUE(rax::math::is_prime(7u));
+		EXPECT_TRUE(rax::math::is_prime(23u));
+		EXPECT_TRUE(rax::math::is_prime(1301u));
+		EXPECT_TRUE(rax::math::is_prime(2009191u));
+		EXPECT_TRUE(rax::math::is_prime(7199369u));
+		EXPECT_TRUE(rax::math::is_prime(39916801u));
+
+		EXPECT_FALSE(rax::math::is_prime(4u));
+		EXPECT_FALSE(rax::math::is_prime(25u));
+		EXPECT_FALSE(rax::math::is_prime(117u));
+		EXPECT_FALSE(rax::math::is_prime(4997u));
+		EXPECT_FALSE(rax::math::is_prime(20171u));
+		EXPECT_FALSE(rax::math::is_prime(121023u));
+		EXPECT_FALSE(rax::math::is_prime(3010347u));
+		EXPECT_FALSE(rax::math::is_prime(20996013u));
+	}
+
 	TEST(rax_math, max)
 	{
 		EXPECT_EQ(4, rax::math::max(2, 4));

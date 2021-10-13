@@ -1,5 +1,7 @@
 #pragma once
 
+#define null nullptr
+
 #ifdef _MSC_VER
 #define RAX_INLINE __forceinline
 #else

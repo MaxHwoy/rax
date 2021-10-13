@@ -2,7 +2,7 @@
 
 namespace rax::text
 {
-	collections::templates::map<std::int32_t, encoding> encoding::converters_{}; // #TODO
+	collections::templates::map<std::int32_t, encoding> encoding::converters_ = collections::templates::map<std::int32_t, encoding>();
 
 	auto encoding::convert(encoding_page from, encoding_page to, const void* src, void* dest) -> std::int32_t
 	{

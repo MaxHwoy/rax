@@ -22,6 +22,7 @@
 #include <rax/collections/bitarray.hpp>
 
 // templates
+#include <rax/collections/templates/comparer.hpp>
 #include <rax/collections/templates/map.hpp>
 
 // fundamental

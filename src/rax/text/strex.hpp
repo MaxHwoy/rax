@@ -76,5 +76,35 @@ namespace rax::text
 			// #TODO - CharUnicodeInfo
 			return false;
 		}
+
+		static auto mem_hashcode(const void* ptr, std::uint32_t size) -> std::uint32_t
+		{
+			auto i = 0u;
+			auto result = 0u;
+			auto data = reinterpret_cast<const std::uint8_t*>(ptr);
+
+			while (i != size)
+			{
+				result += data[i++];
+				result += result << 10;
+				result ^= result >> 6;
+			}
+
+			result += result << 3;
+			result ^= result >> 11;
+			result += result << 15;
+
+			return result;
+		}
+
+		template <typename T> RAX_INLINE static auto mem_hashcode(const T* ptr) -> std::uint32_t
+		{
+			return strex::mem_hashcode(ptr, sizeof(T));
+		}
+
+		template <typename T> RAX_INLINE static auto mem_hashcode(const T& obj) -> std::uint32_t
+		{
+			return strex::mem_hashcode(&obj, sizeof(T));
+		}
 	};
 }

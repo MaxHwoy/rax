@@ -12,6 +12,58 @@ namespace rax
 {
 	class math final
 	{
+	private:
+		static auto mod_power(std::uint32_t a, std::uint32_t n, std::uint32_t mod) -> std::uint64_t
+		{
+			std::uint64_t power = a, result = 1u;
+
+			while (n)
+			{
+				if (n & 1)
+				{
+					result = (result * power) % mod;
+				}
+
+				power = (power * power) % mod;
+				n >>= 1;
+			}
+
+			return result;
+		}
+		static bool mod_witness(std::uint32_t a, std::uint32_t n)
+		{
+			std::uint32_t u = n >> 1;
+			std::uint32_t t = 1u;
+
+			while (!(u & 1))
+			{
+				u >>= 1;
+				++t;
+			}
+
+			std::uint64_t prev = mod_power(a, u, n);
+			std::uint64_t curr = 0u;
+
+			for (std::uint32_t i = 1u; i <= t; ++i)
+			{
+				curr = (prev * prev) % n;
+				
+				if ((curr == 1) && (prev != 1) && (prev != n - 1))
+				{
+					return true;
+				}
+
+				prev = curr;
+			}
+
+			if (curr != 1)
+			{
+				return true;
+			}
+
+			return false;
+		}
+
 	public:
 		template <typename T> RAX_INLINE static auto abs(T value) -> T
 		{
@@ -27,6 +79,62 @@ namespace rax
 		{
 			auto diff = pow2 - (value & (pow2 - 1u));
 			return value + (diff == pow2 ? 0 : diff);
+		}
+
+		static bool is_prime(std::uint32_t number)
+		{
+			// https://stackoverflow.com/questions/4424374/determining-if-a-number-is-prime
+			// LostInTheCode 2010
+
+			if (((!(number & 1u)) && number != 2u) || (number < 2u) || (number % 3u == 0 && number != 3u))
+			{
+				return false;
+			}
+
+			if (number < 1373653u)
+			{
+				for (std::uint32_t k = 1u; 36u * k * k - 12u * k < number; ++k)
+				{
+					if ((number % (6u * k + 1u) == 0) || (number % (6u * k - 1u) == 0))
+					{
+						return (false);
+					}
+				}
+
+				return true;
+			}
+
+			if (number < 9080191u)
+			{
+				if (math::mod_witness(31u, number))
+				{
+					return false;
+				}
+				
+				if (math::mod_witness(73u, number))
+				{
+					return false;
+				}
+
+				return true;
+			}
+
+			if (math::mod_witness(2u, number))
+			{
+				return false;
+			}
+
+			if (math::mod_witness(7u, number))
+			{
+				return false;
+			}
+			
+			if (math::mod_witness(61u, number))
+			{
+				return false;
+			}
+
+			return true;
 		}
 
 		template <typename T> RAX_INLINE static auto max(T a, T b) -> T

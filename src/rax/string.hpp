@@ -120,9 +120,9 @@ namespace rax
 			if (this->ptr_ != this->buffer_)
 			{
 				delete[] this->ptr_;
+				this->ptr_ = this->buffer_;
 			}
 
-			this->ptr_ = this->buffer_;
 			this->length_ = 0u;
 		}
 
