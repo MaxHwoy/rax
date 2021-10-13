@@ -10,6 +10,8 @@
 
 // value types
 #include <rax/tuple.hpp>
+#include <rax/finally.hpp>
+#include <rax/optional.hpp>
 
 // static helpers
 #include <rax/arraysort.hpp>
