@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include <rax/refarray/refarray.hpp>
+#include <rax/refarray.hpp>
 
 namespace rax::tests
 {
@@ -38,7 +38,12 @@ namespace rax::tests
 		EXPECT_EQ(size, to.length());
 	}
 
+	TEST(rax_refarray, start)
+	{
+		auto arr = rax::refarray<char>(10u);
 
+		auto ptr = arr.start();
+	}
 
 
 	TEST(rax_refarray, sort)

@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include <rax/arraysort/arraysort.hpp>
+#include <rax/arraysort.hpp>
 
 namespace rax::tests
 {

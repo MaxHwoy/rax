@@ -1,5 +1,5 @@
 ﻿#include <gtest/gtest.h>
-#include <rax/text/decoder/decoder.hpp>
+#include <rax/text/decoder.hpp>
 
 #pragma warning (disable : 4838) // conversion from 'int' to 'char' requires narrowing/cast
 #pragma warning (disable : 4309) // 'initializing': truncation of constant value

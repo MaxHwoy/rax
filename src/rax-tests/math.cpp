@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include <rax/math/math.hpp>
+#include <rax/math.hpp>
 
 namespace rax::tests
 {
