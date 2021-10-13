@@ -7,6 +7,26 @@ namespace rax::text
 {
 	class strex final
 	{
+	private:
+		RAX_INLINE static bool is_whitespace_latin(std::uint32_t c)
+		{
+			switch (c)
+			{
+				case '\t':
+				case '\n':
+				case '\v':
+				case '\f':
+				case '\r':
+				case ' ':
+				case 0xA0:
+				case 0x85:
+					return true;
+
+				default:
+					return false;
+			}
+		}
+
 	public:
 		/// <summary>
 		/// Returns string length of any null-terminated sequence of type T.
@@ -39,6 +59,22 @@ namespace rax::text
 			}
 
 			return true;
+		}
+
+		RAX_INLINE static bool is_latin(std::uint32_t c)
+		{
+			return c <= 255;
+		}
+
+		static bool is_whitespace(std::uint32_t c)
+		{
+			if (strex::is_latin(c))
+			{
+				return strex::is_whitespace_latin(c);
+			}
+
+			// #TODO - CharUnicodeInfo
+			return false;
 		}
 	};
 }

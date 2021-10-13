@@ -13,9 +13,12 @@ namespace rax
 {
 	string::string(const char* ptr)
 	{
-		this->length_ = rax::text::strex::strlen(ptr, false);
-		this->allocate_space();
-		::memcpy(this->ptr_, ptr, this->length_);
+		auto actual = rax::text::strex::strlen(ptr, false);
+		
+		this->length_ = actual - 1u;
+		this->allocate_space(actual);
+		
+		::memcpy(this->ptr_, ptr, actual);
 	}
 
 	string::string(const wchar_t* ptr)
@@ -46,8 +49,10 @@ namespace rax
 		}
 #endif
 
-		this->length_ = static_cast<std::uint32_t>(length);
-		this->allocate_space();
+		auto actual = static_cast<std::uint32_t>(length);
+
+		this->length_ = actual - 1u;
+		this->allocate_space(actual);
 
 #ifdef _HAS_CXX17
 		if constexpr (sizeof(wchar_t) == sizeof(char16_t))
@@ -77,9 +82,10 @@ namespace rax
 	string::string(const char16_t* ptr)
 	{
 		auto length = rax::text::decoder::utf16_to_utf8_string(ptr, nullptr);
+		auto actual = static_cast<std::uint32_t>(length);
 
-		this->length_ = static_cast<std::uint32_t>(length);
-		this->allocate_space();
+		this->length_ = actual - 1u;
+		this->allocate_space(actual);
 
 		rax::text::decoder::utf16_to_utf8_string(ptr, this->ptr_);
 	}
@@ -87,17 +93,18 @@ namespace rax
 	string::string(const char32_t* ptr)
 	{
 		auto length = rax::text::decoder::utf32_to_utf8_string(ptr, nullptr);
+		auto actual = static_cast<std::uint32_t>(length);
 
-		this->length_ = static_cast<std::uint32_t>(length);
-		this->allocate_space();
+		this->length_ = actual - 1u;
+		this->allocate_space(actual);
 
 		rax::text::decoder::utf32_to_utf8_string(ptr, this->ptr_);
 	}
 
 	string::string(const char* ptr, std::uint32_t start, std::uint32_t length)
 	{
-		this->length_ = length + 1u;
-		this->allocate_space();
+		this->length_ = length;
+		this->allocate_space(length + 1u);
 
 		::memcpy(this->ptr_, ptr + start, length);
 		this->ptr_[length] = 0;
@@ -131,8 +138,8 @@ namespace rax
 		}
 #endif // _HAS_CXX17
 
-		this->length_ = static_cast<std::uint32_t>(actual + 1);
-		this->allocate_space();
+		this->length_ = static_cast<std::uint32_t>(actual);
+		this->allocate_space(this->length_ + 1u);
 
 #ifdef _HAS_CXX17
 		if constexpr (sizeof(wchar_t) == sizeof(char16_t))
@@ -158,29 +165,29 @@ namespace rax
 		}
 #endif // _HAS_CXX17
 
-		this->ptr_[actual] = 0;
+		this->ptr_[this->length_] = 0;
 	}
 
 	string::string(const char16_t* ptr, std::uint32_t start, std::uint32_t length)
 	{
 		auto actual = rax::text::decoder::utf16_to_utf8_string(ptr + start, nullptr, length);
 		
-		this->length_ = static_cast<std::uint32_t>(actual + 1);
-		this->allocate_space();
+		this->length_ = static_cast<std::uint32_t>(actual);
+		this->allocate_space(this->length_ + 1u);
 
 		rax::text::decoder::utf16_to_utf8_string(ptr + start, this->ptr_, length);
-		this->ptr_[actual] = 0;
+		this->ptr_[this->length_] = 0;
 	}
 
 	string::string(const char32_t* ptr, std::uint32_t start, std::uint32_t length)
 	{
 		auto actual = rax::text::decoder::utf32_to_utf8_string(ptr + start, nullptr, length);
 
-		this->length_ = static_cast<std::uint32_t>(actual + 1);
-		this->allocate_space();
+		this->length_ = static_cast<std::uint32_t>(actual);
+		this->allocate_space(this->length_ + 1u);
 
 		rax::text::decoder::utf32_to_utf8_string(ptr + start, this->ptr_, length);
-		this->ptr_[actual] = 0;
+		this->ptr_[this->length_] = 0;
 	}
 
 	string::string(const char* ptr, std::uint32_t start, std::uint32_t length, rax::text::encoding_page enc)
@@ -190,15 +197,17 @@ namespace rax
 
 		if (actual == -1)
 		{
-			this->ptr_ = nullptr;
+			this->ptr_ = this->buffer_;
+			this->buffer_[0] = 0;
 			this->length_ = 0u;
 			return;
 		}
 
-		this->length_ = static_cast<std::uint32_t>(actual + 1);
-		this->allocate_space();
+		this->length_ = static_cast<std::uint32_t>(actual);
+		this->allocate_space(this->length_ + 1u);
 
 		rax::text::encoding::convert(enc, topage, ptr, this->ptr_, start, length);
+		this->buffer_[this->length_] = 0;
 	}
 
 	string::string(const refarray<char>& arr) : string(arr.as_native(), 0u, arr.length())
@@ -255,10 +264,11 @@ namespace rax
 
 	string::string(char c, std::uint32_t count)
 	{
-		this->length_ = count + 1u;
-		this->allocate_space();
+		this->length_ = count;
+		this->allocate_space(this->length_ + 1u);
 
 		::memset(this->ptr_, c, this->length_);
+		this->ptr_[this->length_] = 0;
 	}
 
 	string::string(const string& other)
@@ -280,8 +290,9 @@ namespace rax
 		}
 		else
 		{
-			this->ptr_ = new char[this->length_];
-			::memcpy(this->ptr_, other.ptr_, this->length_);
+			auto count = this->length_ + 1u;
+			this->ptr_ = new char[count];
+			::memcpy(this->ptr_, other.ptr_, count);
 		}
 	}
 
@@ -306,13 +317,18 @@ namespace rax
 			}
 			else
 			{
-				this->ptr_ = new char[this->length_];
-				::memcpy(this->ptr_, other.ptr_, this->length_);
+				auto count = this->length_ + 1u;
+				this->ptr_ = new char[count];
+				::memcpy(this->ptr_, other.ptr_, count);
 			}
 		}
 
 		return *this;
 	}
+
+	//
+	// casts
+	//
 
 	string::operator const char*()
 	{
@@ -321,8 +337,9 @@ namespace rax
 
 	string::operator std::string()
 	{
-		auto result = std::string(this->length_, 0);
-		::memcpy(&result[0], this->ptr_, this->length_);
+		auto actual = this->length_ + 1u;
+		auto result = std::string(actual, 0);
+		::memcpy(&result[0], this->ptr_, actual);
 		return result;
 	}
 
@@ -418,6 +435,10 @@ namespace rax
 		return result;
 	}
 
+	//
+	// operators == and !=
+	//
+
 	bool operator==(const string& lhs, const string& rhs)
 	{
 		return rax::text::strex::strcmp(lhs.as_native(), rhs.as_native());
@@ -438,11 +459,41 @@ namespace rax
 		return !rax::text::strex::strcmp(lhs.as_native(), rhs);
 	}
 
+	//
+	// operators + and +=
+	//
 
+	auto operator+(const string& lhs, const string& rhs) -> string
+	{
+		auto result = string(lhs.length_ + rhs.length_);
 
+		::memcpy(result.ptr_, lhs.ptr_, lhs.length_);
+		::memcpy(result.ptr_ + lhs.length_, rhs.ptr_, rhs.length_);
 
+		result.ptr_[result.length_] = 0;
+		return result;
+	}
 
+	auto operator+(const string& lhs, const char* rhs) -> string
+	{
+		auto length = rax::text::strex::strlen(rhs, true);
+		auto result = string(lhs.length_ + length);
 
+		::memcpy(result.ptr_, lhs.ptr_, lhs.length_);
+		::memcpy(result.ptr_ + lhs.length_, rhs, length);
+
+		result.ptr_[result.length_] = 0;
+		return result;
+	}
+
+	auto operator+(const char* lhs, const string& rhs) -> string
+	{
+		return rhs + lhs;
+	}
+
+	//
+	// instance
+	//
 
 	auto string::substring(std::uint32_t start) -> string
 	{
@@ -455,4 +506,11 @@ namespace rax
 		assert(start + length <= this->length_);
 		return string(this->ptr_, start, length);
 	}
+
+	//
+	// static
+	//
+
+
+
 }

@@ -42,11 +42,17 @@ namespace rax
 		std::uint32_t length_;
 		char buffer_[kmax_buffer_size];
 
-		RAX_INLINE void allocate_space()
+		string(std::uint32_t length)
 		{
-			if (this->length_ > string::kmax_buffer_size)
+			this->length_ = length;
+			this->allocate_space(length + 1u);
+		}
+
+		RAX_INLINE void allocate_space(std::uint32_t size)
+		{
+			if (size > string::kmax_buffer_size)
 			{
-				auto align = rax::math::align_pow_2(this->length_, string::kalloc_alignment);
+				auto align = rax::math::align_pow_2(size, string::kalloc_alignment);
 				this->ptr_ = new char[align];
 			}
 			else
@@ -56,6 +62,9 @@ namespace rax
 		}
 
 	public:
+		//
+		// constructors
+		//
 		string(const char* ptr);
 		string(const wchar_t* ptr);
 		string(const char16_t* ptr);
@@ -117,6 +126,9 @@ namespace rax
 			this->length_ = 0u;
 		}
 
+		//
+		// properties
+		//
 		RAX_INLINE auto operator[](std::uint32_t index) const -> char
 		{
 			assert(index < this->length_);
@@ -136,12 +148,18 @@ namespace rax
 			return this->ptr_;
 		}
 
+		//
+		// casts
+		//
 		operator const char*();
 		operator std::string();
 		operator std::wstring();
 		operator std::u16string();
 		operator std::u32string();
 
+		//
+		// operators == and !=
+		//
 		friend bool operator==(const string& lhs, const string& rhs);
 		friend bool operator!=(const string& lhs, const string& rhs);
 		friend bool operator==(const string& lhs, const char* rhs);
@@ -161,11 +179,59 @@ namespace rax
 		friend bool operator==(const string& lhs, const std::u32string& rhs);
 		friend bool operator!=(const string& lhs, const std::u32string& rhs);
 
+		//
+		// operators + and +=
+		//
+		friend auto operator+(const string& lhs, const string& rhs) -> string;
+		friend auto operator+(const string& lhs, const char* rhs) -> string;
+		friend auto operator+(const char* lhs, const string& rhs) -> string;
+		friend auto operator+(const string& lhs, const wchar_t* rhs) -> string;
+		friend auto operator+(const wchar_t* lhs, const string& rhs) -> string;
+		friend auto operator+(const string& lhs, const char16_t* rhs) -> string;
+		friend auto operator+(const char16_t* lhs, const string& rhs) -> string;
+		friend auto operator+(const string& lhs, const char32_t* rhs) -> string;
+		friend auto operator+(const char32_t* lhs, const string& rhs) -> string;
+		friend auto operator+(const string& lhs, const std::string& rhs) -> string;
+		friend auto operator+(const std::string& lhs, const string& rhs) -> string;
+		friend auto operator+(const string& lhs, const std::wstring& rhs) -> string;
+		friend auto operator+(const std::wstring& lhs, const string& rhs) -> string;
+		friend auto operator+(const string& lhs, const std::u16string rhs) -> string;
+		friend auto operator+(const std::u16string& lhs, const string& rhs) -> string;
+		friend auto operator+(const string& lhs, const std::u32string& rhs) -> string;
+		friend auto operator+(const std::u32string& lhs, const string& rhs) -> string;
 
-
-
+		//
+		// instance
+		//
 		auto substring(std::uint32_t start) -> string;
 		auto substring(std::uint32_t start, std::uint32_t length) -> string;
+
+		//
+		// static
+		//
+		RAX_INLINE static bool is_null_or_empty(const string& str)
+		{
+			return str.length_ == 0u;
+		}
+		RAX_INLINE static bool is_null_or_empty(const string* str)
+		{
+			return str == nullptr || str->length_ == 0u;
+		}
+		RAX_INLINE static bool is_null_or_whitespace(const string& str)
+		{
+			for (std::uint32_t i = 0u; i < str.length_; ++i)
+			{
+				if (!rax::text::strex::is_whitespace(str[i]))
+				{
+					return false;
+				}
+			}
+
+			return true;
+		}
+
+
+
 	};
 
 	RAX_ASSERT_SIZE(string, 0x20);
