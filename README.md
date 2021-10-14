@@ -1,6 +1,9 @@
 # rax
 rax/RAX is a C++ extension library designed to provide cross-platform new, fast, and reliable class types for different fields such as work with I/O, work with text and different encodings, work with math and vector applications, work with template container types, and more.
 
+## Note
+This library is still in heavy development and cannot be used practically anywhere.
+
 ## Features
 * New optimized fundamental classes, such as `refarray`, `tuple`, `hashcode`, `optional`, etc.
 * New UTF8 encoded immutable `string` type that support conversion from and to many encoding pages.
