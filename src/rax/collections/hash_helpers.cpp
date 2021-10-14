@@ -6,7 +6,7 @@ namespace rax::collections
 	{
 		auto length = sizeof(hash_helpers::primes_) / sizeof(std::uint32_t);
 
-		for (int i = 0; i < length; ++i)
+		for (std::uint32_t i = 0; i < length; ++i)
 		{
 			auto num = hash_helpers::primes_[i];
 
@@ -38,5 +38,10 @@ namespace rax::collections
 		}
 
 		return hash_helpers::get_prime(num);
+	}
+
+	auto hash_helpers::get_entropy() -> std::uint64_t
+	{
+		return 0u; // #TODO
 	}
 }

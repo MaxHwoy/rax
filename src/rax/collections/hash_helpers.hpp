@@ -25,6 +25,7 @@ namespace rax::collections
 	public:
 		static auto get_prime(std::uint32_t number) -> std::uint32_t;
 		static auto expand_prime(std::uint32_t number) -> std::uint32_t;
+		static auto get_entropy() -> std::uint64_t;
 
 		RAX_INLINE static bool is_prime(std::uint32_t number)
 		{
