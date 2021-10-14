@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <string>
 #include <rax/shared.hpp>
-#include <rax/math.hpp>
+#include <rax/bitwise.hpp>
 #include <rax/refarray.hpp>
 #include <rax/text/strex.hpp>
 
@@ -52,7 +52,7 @@ namespace rax
 		{
 			if (size > string::kmax_buffer_size)
 			{
-				auto align = rax::math::align_pow_2(size, string::kalloc_alignment);
+				auto align = rax::bitwise::align_pow_2(size, string::kalloc_alignment);
 				this->ptr_ = new char[align];
 			}
 			else

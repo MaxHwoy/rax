@@ -75,12 +75,6 @@ namespace rax
 			return value;
 		}
 
-		RAX_INLINE static auto align_pow_2(std::uint32_t value, std::uint32_t pow2)
-		{
-			auto diff = pow2 - (value & (pow2 - 1u));
-			return value + (diff == pow2 ? 0 : diff);
-		}
-
 		static bool is_prime(std::uint32_t number)
 		{
 			// https://stackoverflow.com/questions/4424374/determining-if-a-number-is-prime
@@ -327,34 +321,6 @@ namespace rax
 			return tuple2(min, max);
 		}
 		
-		RAX_INLINE static auto next_pow_2(std::uint32_t value) -> std::uint32_t
-		{
-			if (value == 0)
-			{
-				return 0; // if only we could get rid of this if
-			}
-
-			--value;
-
-			value |= value >> 1;
-			value |= value >> 2;
-			value |= value >> 4;
-			value |= value >> 8;
-			value |= value >> 16;
-
-			return ++value;
-		}
-		RAX_INLINE static auto prev_pow_2(std::uint32_t value) -> std::uint32_t
-		{
-			value |= value >> 1;
-			value |= value >> 2;
-			value |= value >> 4;
-			value |= value >> 8;
-			value |= value >> 16;
-
-			return value - (value >> 1);
-		}
-
 		static auto sqrt(float value) -> float
 		{
 			const auto result = ::_mm_sqrt_ss(::_mm_load_ss(&value));
