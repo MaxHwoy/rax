@@ -12,6 +12,7 @@
 #include <rax/tuple.hpp>
 #include <rax/finally.hpp>
 #include <rax/optional.hpp>
+#include <rax/unique_ptr.hpp>
 
 // static helpers
 #include <rax/arraysort.hpp>

@@ -14,7 +14,7 @@
 
 #define RAX_NO_COPY(T)								\
 	T(const T&) = delete;							\
-	auto operator=(const T&) -> T& = delete			\
+	auto operator=(const T&) -> T& = delete;		\
 	auto operator=(const T&) volatile -> T& = delete
 
 #define RAX_ASSERT_SIZE(T, N) static_assert(sizeof(T) == N, "sizeof("#T") != "#N)

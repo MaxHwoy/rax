@@ -75,6 +75,14 @@ namespace rax
 			return value;
 		}
 
+		template <typename T> RAX_INLINE auto clamp(T value, T min, T max) -> T
+		{
+			value = (value < min) ? min : value;
+			value = (value > max) ? max : value;
+
+			return value;
+		}
+
 		static bool is_prime(std::uint32_t number)
 		{
 			// https://stackoverflow.com/questions/4424374/determining-if-a-number-is-prime

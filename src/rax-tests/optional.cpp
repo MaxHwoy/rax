@@ -4,9 +4,9 @@
 
 namespace rax::tests
 {
-	TEST(rax, optional)
+	TEST(rax_optional, all)
 	{
-		auto first = rax::optional<int>();
+		auto first = rax::optional<std::int32_t>();
 
 		EXPECT_FALSE(first.has_value());
 		EXPECT_FALSE(first.operator bool());
