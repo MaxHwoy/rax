@@ -11,6 +11,10 @@
 
 namespace rax
 {
+	// ***********************************************************************************************
+	// constructors
+	// ***********************************************************************************************
+
 	string::string(const char* ptr)
 	{
 		auto actual = rax::text::strex::strlen(ptr, false);
@@ -326,9 +330,9 @@ namespace rax
 		return *this;
 	}
 
-	//
+	// ***********************************************************************************************
 	// casts
-	//
+	// ***********************************************************************************************
 
 	string::operator const char*()
 	{
@@ -435,10 +439,10 @@ namespace rax
 		return result;
 	}
 
-	//
+	// ***********************************************************************************************
 	// operators == and !=
-	//
-
+	// ***********************************************************************************************
+	
 	bool operator==(const string& lhs, const string& rhs)
 	{
 		return rax::text::strex::strcmp(lhs.as_native(), rhs.as_native());
@@ -449,38 +453,115 @@ namespace rax
 		return !rax::text::strex::strcmp(lhs.as_native(), rhs.as_native());
 	}
 
-	//
+	// ***********************************************************************************************
 	// operators + and +=
-	//
-
+	// ***********************************************************************************************
+	
 	auto operator+(const string& lhs, const string& rhs) -> string
 	{
 		return string::concat(lhs, rhs);
 	}
-
 	auto operator+(const string& lhs, const char* rhs) -> string
 	{
 		return string::concat(lhs, rhs);
 	}
-
 	auto operator+(const char* lhs, const string& rhs) -> string
 	{
 		return string::concat(lhs, rhs);
 	}
+	auto operator+(const string& lhs, const wchar_t* rhs) -> string
+	{
+		return string::concat(lhs, rhs);
+	}
+	auto operator+(const wchar_t* lhs, const string& rhs) -> string
+	{
+		return string::concat(lhs, rhs);
+	}
+	auto operator+(const string& lhs, const char16_t* rhs) -> string
+	{
+		return string::concat(lhs, rhs);
+	}
+	auto operator+(const char16_t* lhs, const string& rhs) -> string
+	{
+		return string::concat(lhs, rhs);
+	}
+	auto operator+(const string& lhs, const char32_t* rhs) -> string
+	{
+		return string::concat(lhs, rhs);
+	}
+	auto operator+(const char32_t* lhs, const string& rhs) -> string
+	{
+		return string::concat(lhs, rhs);
+	}
+	auto operator+(const string& lhs, const std::string& rhs) -> string
+	{
+		return string::concat(lhs, rhs);
+	}
+	auto operator+(const std::string& lhs, const string& rhs) -> string
+	{
+		return string::concat(lhs, rhs);
+	}
+	auto operator+(const string& lhs, const std::wstring& rhs) -> string
+	{
+		return string::concat(lhs, rhs);
+	}
+	auto operator+(const std::wstring& lhs, const string& rhs) -> string
+	{
+		return string::concat(lhs, rhs);
+	}
+	auto operator+(const string& lhs, const std::u16string& rhs) -> string
+	{
+		return string::concat(lhs, rhs);
+	}
+	auto operator+(const std::u16string& lhs, const string& rhs) -> string
+	{
+		return string::concat(lhs, rhs);
+	}
+	auto operator+(const string& lhs, const std::u32string& rhs) -> string
+	{
+		return string::concat(lhs, rhs);
+	}
+	auto operator+(const std::u32string& lhs, const string& rhs) -> string
+	{
+		return string::concat(lhs, rhs);
+	}
 
-	//auto operator+(const string& lhs, const wchar_t* rhs) -> string
-	//{
-	//	
-	//}
-	//
-	//auto operator+(const wchar_t* lhs, const string& rhs) -> string
-	//{
-	//
-	//}
-
-	//
+	// ***********************************************************************************************
 	// instance
-	//
+	// ***********************************************************************************************
+
+
+	bool string::equals(const string& value)
+	{
+		return string::equals(*this, value);
+	}
+
+	bool string::equals(const string* value)
+	{
+		if (value == nullptr)
+		{
+			return false;
+		}
+
+		return string::equals(*this, *value);
+	}
+
+	bool string::equals(const string& value, string_comparison comparison)
+	{
+		return string::equals(*this, value, comparison);
+	}
+
+	bool string::equals(const string* value, string_comparison comparison)
+	{
+		if (value == nullptr)
+		{
+			return false;
+		}
+
+		return string::equals(*this, *value, comparison);
+	}
+
+
 
 	auto string::substring(std::uint32_t start) -> string
 	{
@@ -494,9 +575,63 @@ namespace rax
 		return string(this->ptr_, start, length);
 	}
 
-	//
+	// ***********************************************************************************************
 	// static
-	//
+	// ***********************************************************************************************
+
+
+	auto string::compare_ordinal(const string& a, const string& b) -> std::int32_t
+	{
+		auto length = a.length_ < b.length_ ? a.length_ : b.length_;
+		auto result = ::memcmp(a.ptr_, b.ptr_, length);
+
+		if (result == 0)
+		{
+			return a.length_ - b.length_;
+		}
+		else
+		{
+			return result;
+		}
+	}
+
+	auto string::compare_ordinal(const string* a, const string* b) -> std::int32_t
+	{
+		if (a == nullptr)
+		{
+			return -1 + (b == nullptr);
+		}
+
+		if (b == nullptr)
+		{
+			return 1;
+		}
+
+		return string::compare_ordinal(*a, *b);
+	}
+
+	auto string::compare_ordinal(const string& a, std::uint32_t index_a, const string& b, std::uint32_t index_b, std::uint32_t length) -> std::int32_t
+	{
+		assert(index_a + length <= a.length_);
+		assert(index_b + length <= b.length_);
+
+		return ::memcmp(a.ptr_ + index_a, b.ptr_ + index_b, length);
+	}
+
+	auto string::compare_ordinal(const string* a, std::uint32_t index_a, const string* b, std::uint32_t index_b, std::uint32_t length) -> std::int32_t
+	{
+		if (a == nullptr)
+		{
+			return -1 + (b == nullptr);
+		}
+
+		if (b == nullptr)
+		{
+			return 1;
+		}
+
+		return string::compare_ordinal(*a, index_a, *b, index_b, length);
+	}
 
 	auto string::concat(const string& a, const string& b) -> string
 	{
@@ -533,5 +668,176 @@ namespace rax
 		return result;
 	}
 
+	auto string::concat(const string& a, const wchar_t* b) -> string
+	{
+#ifdef _HAS_CXX17
+		if constexpr (sizeof(wchar_t) == sizeof(char16_t))
+		{
+			return string::concat(a, reinterpret_cast<const char16_t*>(b));
+		}
+		else
+		{
+			return string::concat(a, reinterpret_cast<const char32_t*>(b));
+		}
+#else
+		if (sizeof(wchar_t) == sizeof(char16_t))
+		{
+			return string::concat(a, reinterpret_cast<const char16_t*>(b));
+		}
+		else
+		{
+			return string::concat(a, reinterpret_cast<const char32_t*>(b));
+		}
+#endif // _HAS_CXX17
+	}
 
+	auto string::concat(const wchar_t* a, const string& b) -> string
+	{
+#ifdef _HAS_CXX17
+		if constexpr (sizeof(wchar_t) == sizeof(char16_t))
+		{
+			return string::concat(reinterpret_cast<const char16_t*>(a), b);
+		}
+		else
+		{
+			return string::concat(reinterpret_cast<const char32_t*>(a), b);
+		}
+#else
+		if (sizeof(wchar_t) == sizeof(char16_t))
+		{
+			return string::concat(reinterpret_cast<const char16_t*>(a), b);
+		}
+		else
+		{
+			return string::concat(reinterpret_cast<const char32_t*>(a), b);
+		}
+#endif // _HAS_CXX17
+	}
+
+	auto string::concat(const string& a, const char16_t* b) -> string
+	{
+		auto length = rax::text::decoder::utf16_to_utf8_string(b, nullptr);
+		auto result = string(a.length_ + length);
+
+		::memcpy(result.ptr_, a.ptr_, a.length_);
+		rax::text::decoder::utf16_to_utf8_string(b, result.ptr_ + a.length_);
+
+		result.ptr_[result.length_] = 0;
+		return result;
+	}
+	
+	auto string::concat(const char16_t* a, const string& b) -> string
+	{
+		auto length = rax::text::decoder::utf16_to_utf8_string(a, nullptr);
+		auto result = string(b.length_ + length);
+
+		rax::text::decoder::utf16_to_utf8_string(a, result.ptr_);
+		::memcpy(result.ptr_ + length, b.ptr_, b.length_);
+
+		result.ptr_[result.length_] = 0;
+		return result;
+	}
+
+	auto string::concat(const string& a, const char32_t* b) -> string
+	{
+		auto length = rax::text::decoder::utf32_to_utf8_string(b, nullptr);
+		auto result = string(a.length_ + length);
+
+		::memcpy(result.ptr_, a.ptr_, a.length_);
+		rax::text::decoder::utf32_to_utf8_string(b, result.ptr_ + a.length_);
+
+		result.ptr_[result.length_] = 0;
+		return result;
+	}
+
+	auto string::concat(const char32_t* a, const string& b) -> string
+	{
+		auto length = rax::text::decoder::utf32_to_utf8_string(a, nullptr);
+		auto result = string(b.length_ + length);
+
+		rax::text::decoder::utf32_to_utf8_string(a, result.ptr_);
+		::memcpy(result.ptr_ + length, b.ptr_, b.length_);
+
+		result.ptr_[result.length_] = 0;
+		return result;
+	}
+
+	auto string::concat(const string& a, const string& b, const string& c) -> string
+	{
+		auto result = string(a.length_ + b.length_ + c.length_);
+
+		::memcpy(result.ptr_, a.ptr_, a.length_);
+		::memcpy(result.ptr_ + a.length_, b.ptr_, b.length_);
+		::memcpy(result.ptr_ + a.length_ + b.length_, c.ptr_, c.length_);
+
+		result.ptr_[result.length_] = 0;
+		return result;
+	}
+
+	auto string::concat(const string* ptr, std::uint32_t length) -> string
+	{
+		std::uint32_t size = 0u;
+
+		for (std::uint32_t i = 0u; i < length; ++i)
+		{
+			size += ptr[i].length_;
+		}
+
+		auto result = string(size);
+
+		for (std::uint32_t i = 0u, off = 0u; i < length; ++i)
+		{
+			::memcpy(result.ptr_ + off, ptr[i].ptr_, ptr[i].length_);
+			off += ptr[i].length_;
+		}
+
+		result.ptr_[result.length_] = 0;
+		return result;
+	}
+
+
+	bool string::equals(const string& a, const string& b)
+	{
+		if (a.length_ != b.length_)
+		{
+			return false;
+		}
+
+		return !::memcmp(a.ptr_, b.ptr_, a.length_);
+	}
+
+	bool string::equals(const string* a, const string* b)
+	{
+		if (a == nullptr)
+		{
+			return b == nullptr;
+		}
+
+		if (b == nullptr)
+		{
+			return false;
+		}
+
+		return string::equals(*a, *b);
+	}
+
+	bool string::equals(const string& a, const string& b, string_comparison comparison)
+	{
+		return false; // #TODO
+	}
+
+	bool string::equals(const string* a, const string* b, string_comparison comparison)
+	{
+		if (a == nullptr)
+		{
+			return b == nullptr;
+		}
+
+		if (b == nullptr)
+		{
+			return false;
+		}
+
+		return string::equals(*a, *b, comparison);
+	}
 }

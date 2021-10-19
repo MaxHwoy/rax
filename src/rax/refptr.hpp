@@ -57,7 +57,6 @@ namespace rax
 		}
 
 	public:
-
 		refptr(const refptr& other)
 		{
 			this->ptr_ = other.ptr_;
@@ -82,6 +81,12 @@ namespace rax
 			}
 
 			return *this;
+		}
+
+		refptr& operator=(refptr&& other) noexcept
+		{
+			this->ptr_ = other.ptr_;
+			other.ptr_ = nullptr;
 		}
 
 		~refptr()
@@ -138,3 +143,5 @@ namespace rax
 		}
 	};
 }
+
+#define __makeref(T) rax::refptr<T>::make_ref()

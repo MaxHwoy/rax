@@ -71,9 +71,10 @@ namespace rax
 		}
 
 	public:
-		//
+		// ***********************************************************************************************
 		// constructors
-		//
+		// ***********************************************************************************************
+		
 		RAX_INLINE string() noexcept
 		{
 			this->length_ = 0u;
@@ -142,9 +143,10 @@ namespace rax
 			this->ptr_[0] = 0;
 		}
 
-		//
+		// ***********************************************************************************************
 		// properties
-		//
+		// ***********************************************************************************************
+		
 		RAX_INLINE auto operator[](std::uint32_t index) const -> char
 		{
 			assert(index < this->length_);
@@ -164,24 +166,27 @@ namespace rax
 			return this->ptr_;
 		}
 
-		//
+		// ***********************************************************************************************
 		// casts
-		//
+		// ***********************************************************************************************
+		
 		operator const char*();
 		operator std::string();
 		operator std::wstring();
 		operator std::u16string();
 		operator std::u32string();
 
-		//
+		// ***********************************************************************************************
 		// operators == and !=
-		//
+		// ***********************************************************************************************
+		
 		friend bool operator==(const string& lhs, const string& rhs);
 		friend bool operator!=(const string& lhs, const string& rhs);
 
-		//
+		// ***********************************************************************************************
 		// operators + and +=
-		//
+		// ***********************************************************************************************
+		
 		friend auto operator+(const string& lhs, const string& rhs) -> string;
 		friend auto operator+(const string& lhs, const char* rhs) -> string;
 		friend auto operator+(const char* lhs, const string& rhs) -> string;
@@ -200,10 +205,12 @@ namespace rax
 		friend auto operator+(const string& lhs, const std::u32string& rhs) -> string;
 		friend auto operator+(const std::u32string& lhs, const string& rhs) -> string;
 
-		//
+		// ***********************************************************************************************
 		// instance
-		//
+		// ***********************************************************************************************
+		
 		bool contains(const string& value);
+
 		void copy_to(std::uint32_t src_index, char* dest, std::uint32_t dest_index, std::uint32_t length);
 
 		bool ends_with(char value);
@@ -211,6 +218,11 @@ namespace rax
 		bool ends_with(const string& value);
 		bool ends_with(const string& value, string_comparison comparison);
 		bool ends_with(const string& value, bool ignore_case, globalization::culture_info culture);
+
+		bool equals(const string& value);
+		bool equals(const string* value);
+		bool equals(const string& value, string_comparison comparison);
+		bool equals(const string* value, string_comparison comparison);
 
 		// #TODO: index_of
 		// #TODO: index_of_any
@@ -246,19 +258,25 @@ namespace rax
 		// #TODO: to_upper
 		// #TODO: trim
 
-		//
+		// ***********************************************************************************************
 		// static
-		//
-
+		// ***********************************************************************************************
+		
 		static auto compare(const string& a, const string& b) -> std::int32_t;
 		static auto compare(const string& a, const string& b, bool ignore_case) -> std::int32_t;
 		static auto compare(const string& a, const string& b, string_comparison comparison) -> std::int32_t;
 		static auto compare(const string& a, const string& b, bool ignore_case, globalization::culture_info culture) -> std::int32_t;
 		static auto compare(const string& a, const string& b, globalization::culture_info culture, globalization::compare_options options) -> std::int32_t;
 		static auto compare(const string& a, std::uint32_t index_a, const string& b, std::uint32_t index_b, std::uint32_t length) -> std::int32_t;
-		// #TODO: the rest
+		static auto compare(const string& a, std::uint32_t index_a, const string& b, std::uint32_t index_b, std::uint32_t length, bool ignore_case) -> std::int32_t;
+		static auto compare(const string& a, std::uint32_t index_a, const string& b, std::uint32_t index_b, std::uint32_t length, string_comparison comparison) -> std::int32_t;
+		static auto compare(const string& a, std::uint32_t index_a, const string& b, std::uint32_t index_b, std::uint32_t length, bool ignore_case, globalization::culture_info culture) -> std::int32_t;
+		static auto compare(const string& a, std::uint32_t index_a, const string& b, std::uint32_t index_b, std::uint32_t length, globalization::culture_info culture, globalization::compare_options options) -> std::int32_t;
+
 		static auto compare_ordinal(const string& a, const string& b) -> std::int32_t;
+		static auto compare_ordinal(const string* a, const string* b) -> std::int32_t;
 		static auto compare_ordinal(const string& a, std::uint32_t index_a, const string& b, std::uint32_t index_b, std::uint32_t length) -> std::int32_t;
+		static auto compare_ordinal(const string* a, std::uint32_t index_a, const string* b, std::uint32_t index_b, std::uint32_t length) -> std::int32_t;
 
 		static auto concat(const string& a, const string& b) -> string;
 		static auto concat(const string& a, const char* b) -> string;
@@ -269,16 +287,45 @@ namespace rax
 		static auto concat(const char16_t* a, const string& b) -> string;
 		static auto concat(const string& a, const char32_t* b) -> string;
 		static auto concat(const char32_t* a, const string& b) -> string;
-		static auto concat(const string& a, const std::string& b) -> string;
-		static auto concat(const std::string& a, const string& b) -> string;
-		static auto concat(const string& a, const std::wstring& b) -> string;
-		static auto concat(const std::wstring& a, const string& b) -> string;
-		static auto concat(const string& a, const std::u16string& b) -> string;
-		static auto concat(const std::u16string& a, const string& b) -> string;
-		static auto concat(const string& a, const std::u32string& b) -> string;
-		static auto concat(const std::u32string& a, const string& b) -> string;
+		RAX_INLINE static auto concat(const string& a, const std::string& b) -> string
+		{
+			return string::concat(a, b.c_str());
+		}
+		RAX_INLINE static auto concat(const std::string& a, const string& b) -> string
+		{
+			return string::concat(a.c_str(), b);
+		}
+		RAX_INLINE static auto concat(const string& a, const std::wstring& b) -> string
+		{
+			return string::concat(a, b.c_str());
+		}
+		RAX_INLINE static auto concat(const std::wstring& a, const string& b) -> string
+		{
+			return string::concat(a.c_str(), b);
+		}
+		RAX_INLINE static auto concat(const string& a, const std::u16string& b) -> string
+		{
+			return string::concat(a, b.c_str());
+		}
+		RAX_INLINE static auto concat(const std::u16string& a, const string& b) -> string
+		{
+			return string::concat(a.c_str(), b);
+		}
+		RAX_INLINE static auto concat(const string& a, const std::u32string& b) -> string
+		{
+			return string::concat(a, b.c_str());
+		}
+		RAX_INLINE static auto concat(const std::u32string& a, const string& b) -> string
+		{
+			return string::concat(a.c_str(), b);
+		}
 		static auto concat(const string& a, const string& b, const string& c) -> string;
 		static auto concat(const string* ptr, std::uint32_t length) -> string;
+
+		static bool equals(const string& a, const string& b);
+		static bool equals(const string* a, const string* b);
+		static bool equals(const string& a, const string& b, string_comparison comparison);
+		static bool equals(const string* a, const string* b, string_comparison comparison);
 
 		// #TODO: format
 

@@ -1,19 +1,18 @@
 #include <gtest/gtest.h>
-#include <rax/shared.hpp>
 #include <rax/unique_ptr.hpp>
+#include <rax/string.hpp>
 
 namespace rax::tests
 {
 	struct unique_ptr_test
 	{
-		RAX_INLINE unique_ptr_test(std::int32_t integer, const std::string& string, float floating)
+		RAX_INLINE unique_ptr_test(std::int32_t integer, const rax::string& string, float floating)
 			: integer(integer), string(string), floating(floating)
 		{
-
 		}
 
 		std::int32_t integer;
-		std::string string;
+		rax::string string;
 		float floating;
 	};
 
@@ -32,7 +31,7 @@ namespace rax::tests
 		EXPECT_TRUE(!second.get());
 
 		EXPECT_EQ(third->integer, 1);
-		EXPECT_TRUE(!third->string.compare("hello"));
+		EXPECT_EQ(rax::string::compare_ordinal(third->string, "hello"), 0);
 
 		auto move = std::move(third);
 
