@@ -449,47 +449,34 @@ namespace rax
 		return !rax::text::strex::strcmp(lhs.as_native(), rhs.as_native());
 	}
 
-	bool operator==(const string& lhs, const char* rhs)
-	{
-		return rax::text::strex::strcmp(lhs.as_native(), rhs);
-	}
-
-	bool operator!=(const string& lhs, const char* rhs)
-	{
-		return !rax::text::strex::strcmp(lhs.as_native(), rhs);
-	}
-
 	//
 	// operators + and +=
 	//
 
 	auto operator+(const string& lhs, const string& rhs) -> string
 	{
-		auto result = string(lhs.length_ + rhs.length_);
-
-		::memcpy(result.ptr_, lhs.ptr_, lhs.length_);
-		::memcpy(result.ptr_ + lhs.length_, rhs.ptr_, rhs.length_);
-
-		result.ptr_[result.length_] = 0;
-		return result;
+		return string::concat(lhs, rhs);
 	}
 
 	auto operator+(const string& lhs, const char* rhs) -> string
 	{
-		auto length = rax::text::strex::strlen(rhs, true);
-		auto result = string(lhs.length_ + length);
-
-		::memcpy(result.ptr_, lhs.ptr_, lhs.length_);
-		::memcpy(result.ptr_ + lhs.length_, rhs, length);
-
-		result.ptr_[result.length_] = 0;
-		return result;
+		return string::concat(lhs, rhs);
 	}
 
 	auto operator+(const char* lhs, const string& rhs) -> string
 	{
-		return rhs + lhs;
+		return string::concat(lhs, rhs);
 	}
+
+	//auto operator+(const string& lhs, const wchar_t* rhs) -> string
+	//{
+	//	
+	//}
+	//
+	//auto operator+(const wchar_t* lhs, const string& rhs) -> string
+	//{
+	//
+	//}
 
 	//
 	// instance
@@ -511,6 +498,40 @@ namespace rax
 	// static
 	//
 
+	auto string::concat(const string& a, const string& b) -> string
+	{
+		auto result = string(a.length_ + b.length_);
+
+		::memcpy(result.ptr_, a.ptr_, a.length_);
+		::memcpy(result.ptr_ + a.length_, b.ptr_, b.length_);
+
+		result.ptr_[result.length_] = 0;
+		return result;
+	}
+
+	auto string::concat(const string& a, const char* b) -> string
+	{
+		auto length = rax::text::strex::strlen(b, true);
+		auto result = string(a.length_ + length);
+
+		::memcpy(result.ptr_, a.ptr_, a.length_);
+		::memcpy(result.ptr_ + a.length_, b, length);
+
+		result.ptr_[result.length_] = 0;
+		return result;
+	}
+
+	auto string::concat(const char* a, const string& b) -> string
+	{
+		auto length = rax::text::strex::strlen(a, true);
+		auto result = string(b.length_ + length);
+
+		::memcpy(result.ptr_, a, length);
+		::memcpy(result.ptr_ + length, b.ptr_, b.length_);
+
+		result.ptr_[result.length_] = 0;
+		return result;
+	}
 
 
 }

@@ -1,25 +1,23 @@
 #include <stdafx.hpp>
-
+#include <vector>
 #include <cuchar>
+
+class cool_class
+{
+public:
+	std::int32_t int_value;
+	float float_value;
+	rax::string string_value;
+};
 
 void test()
 {
-	auto mymap = rax::collections::templates::map<std::uint32_t, std::int32_t>
-	{
-		{ 5u, 3 },
-		{ 9u, 4 },
-		{ 4u, 1 },
-		{ 12u, 9 },
-	};
+	auto reference = rax::refptr<cool_class>::make_ref();
 
-	mymap.put(7u, 13);
+	reference->string_value = "fucking hell";
+	reference->float_value = 23.456f;
 
-	std::int32_t result = 0;
-
-	if (mymap.try_get_value(7u, result))
-	{
-		assert(result == 13);
-	}
+	*reference = cool_class();
 
 	__debugbreak();
 }
@@ -27,11 +25,6 @@ void test()
 auto main(__int32 argc, const char** argv) -> std::int32_t
 {
 	test();
-
-#ifndef DEBUG_ARRAY_PRINT
-	::printf("Allocated array count: %d\n", rax::refarray_debug_info::num_allocated_refarrays);
-	::printf("Destroyed array count: %d\n", rax::refarray_debug_info::num_destroyed_refarrays);
-#endif // !DEBUG_ARRAY_PRINT
 
 	return 0;
 }

@@ -19,7 +19,9 @@
 
 #define RAX_ASSERT_SIZE(T, N) static_assert(sizeof(T) == N, "sizeof("#T") != "#N)
 
-#define REF(T) const T&
+//#define REF(T) const T&
+
+#define __init(address) new(address)
 
 // this is used specifically for evaluating current targetted OS
 // __LP64__ is defined for GCC
@@ -72,4 +74,3 @@
 // #endif  // defined(_MSC_VER)
 
 // debug macros
-// #define DEBUG_ARRAY_PRINT

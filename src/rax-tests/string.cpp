@@ -13,6 +13,14 @@ namespace rax::tests
 		EXPECT_EQ(str1, str2);
 	}
 
+	TEST(rax_string, operator_equals)
+	{
+		string a = "Check out Instant Gaming for Cheap Game keys!";
+		auto b = u"Check out Instant Gaming for Cheap Game keys!";
+
+		EXPECT_TRUE(a == b);
+	}
+
 	TEST(rax_string, operator_plus)
 	{
 		string a = "Stop talking ";
@@ -26,7 +34,7 @@ namespace rax::tests
 		string f = d + e;
 		string g = e + d;
 
-		EXPECT_EQ(f, g);
+		EXPECT_NE(f, g);
 	}
 
 	TEST(rax_string, substring)

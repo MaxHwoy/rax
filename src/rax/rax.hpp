@@ -7,12 +7,11 @@
 // functional
 #include <rax/action.hpp>
 #include <rax/function.hpp>
+#include <rax/allocator.hpp>
 
 // value types
 #include <rax/tuple.hpp>
 #include <rax/finally.hpp>
-#include <rax/optional.hpp>
-#include <rax/unique_ptr.hpp>
 
 // static helpers
 #include <rax/arraysort.hpp>
@@ -25,7 +24,10 @@
 #include <rax/collections/bitarray.hpp>
 
 // fundamental
+#include <rax/refptr.hpp>
 #include <rax/refarray.hpp>
+#include <rax/optional.hpp>
+#include <rax/unique_ptr.hpp>
 #include <rax/string.hpp>
 
 // ...

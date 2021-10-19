@@ -1,5 +1,8 @@
 #pragma once
 
+#include <cstdint>
+#include <rax/shared.hpp>
+
 namespace rax
 {
 	template <typename T> class unique_ptr

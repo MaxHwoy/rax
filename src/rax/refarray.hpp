@@ -12,13 +12,6 @@
 
 namespace rax
 {
-	class refarray_debug_info final
-	{
-	public:
-		static inline std::int32_t num_allocated_refarrays = 0;
-		static inline std::int32_t num_destroyed_refarrays = 0;
-	};
-
 	template <typename T> class refarray
 	{
 	private:
@@ -63,15 +56,9 @@ namespace rax
 			// if no references exists, destroy array
 			if (refcount == 0u)
 			{
-#ifdef DEBUG_ARRAY_PRINT
-				::printf("Destroying ref array of size %d\n", this->length());
-#endif // !DEBUG_ARRAY_PRINT
-
-				::free(this->ptr_ - sizeof(std::uint64_t));
+				::free(this->ptr_ - sizeof(std::uint64_t)); // #TODO: destruction???
 
 				this->ptr_ = nullptr;
-
-				++refarray_debug_info::num_destroyed_refarrays;
 			}
 		}
 
@@ -84,10 +71,6 @@ namespace rax
 			// minimum allocation size will always be 8 bytes where
 			// 4 bytes are used for length and other 4 for ref count
 
-#ifdef DEBUG_ARRAY_PRINT
-			::printf("Allocating ref array of size %d\n", size);
-#endif // !DEBUG_ARRAY_PRINT
-
 			// allocate element storage with minimum size of 8 bytes
 			auto data = ::calloc(sizeof(std::uint64_t) + size * sizeof(T), 1u);
 
@@ -99,8 +82,6 @@ namespace rax
 
 			// set initial reference counter to 1
 			this->increment_ref();
-
-			++refarray_debug_info::num_allocated_refarrays;
 		}
 		refarray(const refarray& other)
 		{
@@ -182,11 +163,11 @@ namespace rax
 			return reinterpret_cast<T*>(this->ptr_) + this->length();
 		}
 		
-		RAX_INLINE void memory_copy_to(REF(refarray) arr, std::uint32_t index)
+		RAX_INLINE void memory_copy_to(const refarray& arr, std::uint32_t index)
 		{
 			refarray::memory_copy(this, 0u, arr, index, this->length());
 		}
-		RAX_INLINE void value_copy_to(REF(refarray) arr, std::uint32_t index)
+		RAX_INLINE void value_copy_to(const refarray& arr, std::uint32_t index)
 		{
 			refarray::value_copy(this, 0u, arr, index, this->length());
 		}
@@ -194,12 +175,12 @@ namespace rax
 		//
 		// static
 		//
-		static auto binary_search(REF(refarray) arr, const T& value) -> std::int32_t
+		static auto binary_search(const refarray& arr, const T& value) -> std::int32_t
 		{
 			return refarray::binary_search(arr, 0u, arr.length(), value);
 		}
 
-		static auto binary_search(REF(refarray) arr, std::uint32_t start, std::uint32_t length, const T& value) -> std::int32_t
+		static auto binary_search(const refarray& arr, std::uint32_t start, std::uint32_t length, const T& value) -> std::int32_t
 		{
 			auto end = start + length;
 
@@ -231,12 +212,12 @@ namespace rax
 			return -1;
 		}
 
-		static auto binary_search(REF(refarray) arr, const T& value, comparison<T> comparer) -> std::int32_t
+		static auto binary_search(const refarray& arr, const T& value, comparison<T> comparer) -> std::int32_t
 		{
 			return refarray::binary_search(arr, 0u, arr.length(), value, comparer);
 		}
 
-		static auto binary_search(REF(refarray) arr, std::uint32_t start, std::uint32_t length, const T& value, comparison<T> comparer) -> std::int32_t
+		static auto binary_search(const refarray& arr, std::uint32_t start, std::uint32_t length, const T& value, comparison<T> comparer) -> std::int32_t
 		{
 			auto end = start + length;
 			
@@ -273,7 +254,7 @@ namespace rax
 			return -1;
 		}
 
-		template <typename TOutput> static auto convert_all(REF(refarray) arr, converter<T, TOutput> convert) -> refarray<TOutput>
+		template <typename TOutput> static auto convert_all(const refarray& arr, converter<T, TOutput> convert) -> refarray<TOutput>
 		{
 			assert(convert != nullptr);
 
@@ -288,12 +269,12 @@ namespace rax
 			return result;
 		}
 
-		static auto empty() -> REF(refarray)
+		static auto empty() -> const refarray&
 		{
 			return refarray::empty_;
 		}
 		
-		static bool exists(REF(refarray) arr, predicate<T> match)
+		static bool exists(const refarray& arr, predicate<T> match)
 		{
 			return refarray::find_index(arr, 0u, arr.length(), match) != -1;
 		}
@@ -302,17 +283,17 @@ namespace rax
 
 		// FIND
 
-		static auto find_index(REF(refarray) arr, predicate<T> match) -> std::int32_t
+		static auto find_index(const refarray& arr, predicate<T> match) -> std::int32_t
 		{
 			return refarray::find_index(arr, 0u, arr.length(), match);
 		}
 
-		static auto find_index(REF(refarray) arr, std::uint32_t start, predicate<T> match) -> std::int32_t
+		static auto find_index(const refarray& arr, std::uint32_t start, predicate<T> match) -> std::int32_t
 		{
 			return refarray::find_index(arr, start, arr.length(), match);
 		}
 
-		static auto find_index(REF(refarray) arr, std::uint32_t start, std::uint32_t length, predicate<T> match) -> std::int32_t
+		static auto find_index(const refarray& arr, std::uint32_t start, std::uint32_t length, predicate<T> match) -> std::int32_t
 		{
 			auto end = start + length;
 
@@ -330,12 +311,12 @@ namespace rax
 			return -1;
 		}
 
-		static void memory_copy(REF(refarray) src_array, REF(refarray) dest_array, std::uint32_t length)
+		static void memory_copy(const refarray& src_array, const refarray& dest_array, std::uint32_t length)
 		{
 			refarray::memory_copy(src_array, 0u, dest_array, 0u, length);
 		}
 
-		static void memory_copy(REF(refarray) src_array, std::uint32_t src_index, REF(refarray) dest_array, std::uint32_t dest_index, std::uint32_t length)
+		static void memory_copy(const refarray& src_array, std::uint32_t src_index, const refarray& dest_array, std::uint32_t dest_index, std::uint32_t length)
 		{
 			assert(src_index + length <= src_array.length());
 			assert(dest_index + length <= dest_array.length());
@@ -372,17 +353,17 @@ namespace rax
 
 		
 		// SORTS
-		static void sort(REF(refarray) arr)
+		static void sort(const refarray& arr)
 		{
 			refarray::sort(arr, 0u, arr.length());
 		}
 
-		static void sort(REF(refarray) arr, comparison<T> comparer)
+		static void sort(const refarray& arr, comparison<T> comparer)
 		{
 			refarray::sort(arr, 0u, arr.length(), comparer);
 		}
 
-		static void sort(REF(refarray) arr, std::uint32_t start, std::uint32_t length)
+		static void sort(const refarray& arr, std::uint32_t start, std::uint32_t length)
 		{
 			if (length <= 1)
 			{
@@ -398,7 +379,7 @@ namespace rax
 			arraysort<T>::introspective_sort(ptr, start, length);
 		}
 
-		static void sort(REF(refarray) arr, std::uint32_t start, std::uint32_t length, comparison<T> comparer)
+		static void sort(const refarray& arr, std::uint32_t start, std::uint32_t length, comparison<T> comparer)
 		{
 			if (length <= 1)
 			{
@@ -414,12 +395,12 @@ namespace rax
 			arraysort<T>::introspective_sort(ptr, start, length, comparer);
 		}
 
-		static void value_copy(REF(refarray) src_array, REF(refarray) dest_array, std::uint32_t length)
+		static void value_copy(const refarray& src_array, const refarray& dest_array, std::uint32_t length)
 		{
 			refarray::value_copy(src_array, 0u, dest_array, 0u, length);
 		}
 		
-		static void value_copy(REF(refarray) src_array, std::uint32_t src_index, REF(refarray) dest_array, std::uint32_t dest_index, std::uint32_t length)
+		static void value_copy(const refarray& src_array, std::uint32_t src_index, const refarray& dest_array, std::uint32_t dest_index, std::uint32_t length)
 		{
 			assert(src_index + length <= src_array.length());
 			assert(dest_index + length <= dest_array.length());
