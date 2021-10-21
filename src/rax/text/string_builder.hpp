@@ -1,6 +1,7 @@
 #pragma once
 
 #include <rax/shared.hpp>
+#include <rax/environment.hpp>
 
 #include <rax/string.hpp>
 
@@ -96,6 +97,11 @@ namespace rax::text
 		RAX_INLINE void append(const std::u32string& string)
 		{
 			this->string_ = rax::string::concat(this->string_, string);
+		}
+		
+		RAX_INLINE void append_line()
+		{
+			this->string_ = string::concat(this->string_, environment::new_line());
 		}
 
 		RAX_INLINE void replace(char oldc, char newc)

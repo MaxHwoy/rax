@@ -48,8 +48,14 @@ namespace rax
 #endif
 	}
 
-
-
+	auto environment::new_line() -> const char*
+	{
+#ifdef PLATFORM_WINDOWS
+		return "\r\n";
+#else
+		return "\n";
+#endif
+	}
 
 	bool environment::is_64bit_process()
 	{

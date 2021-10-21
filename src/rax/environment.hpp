@@ -18,7 +18,7 @@ namespace rax
 		static void set_environment_variable(const char* variable, const char* value);
 
 		static auto process_id() -> std::uint32_t;
-
+		static auto new_line() -> const char*;
 
 
 		static bool is_64bit_process();
