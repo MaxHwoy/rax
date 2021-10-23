@@ -8,7 +8,7 @@
 
 #ifdef PLATFORM_UNIX
 #include <unistd.h>
-#endif
+#endif // PLATFORM_UNIX
 
 namespace rax
 {
@@ -28,16 +28,27 @@ namespace rax
 	auto environment::get_environment_variable(const wchar_t* variable) -> const wchar_t*
 	{
 		::GetEnvironmentVariableW(variable, environment::internal_buffer_, sizeof(environment::internal_buffer_) / sizeof(wchar_t));
+
 		return environment::internal_buffer_;
 	}
 
 	void environment::set_environment_variable(const char* variable, const char* value)
 	{
-
+#ifdef PLATFORM_WINDOWS
+		::SetEnvironmentVariableA(variable, value);
+#else
+		// TODO
+#endif // PLATFORM_WINDOWS
 	}
 
-
-
+	void environment::set_environment_variable(const wchar_t* variable, const wchar_t* value)
+	{
+#ifdef PLATFORM_WINDOWS
+		::SetEnvironmentVariableW(variable, value);
+#else
+		// TODO
+#endif // PLATFORM_WINDOWS
+	}
 
 	auto environment::process_id() -> std::uint32_t
 	{
@@ -45,7 +56,7 @@ namespace rax
 		return ::GetCurrentProcessId();
 #else
 		return ::getpid();
-#endif
+#endif // PLATFORM_WINDOWS
 	}
 
 	auto environment::new_line() -> const char*
@@ -54,7 +65,7 @@ namespace rax
 		return "\r\n";
 #else
 		return "\n";
-#endif
+#endif // PLATFORM_WINDOWS
 	}
 
 	bool environment::is_64bit_process()
@@ -63,7 +74,7 @@ namespace rax
 		return false;
 #else
 		return true;
-#endif // !_M_X64
+#endif // !TARGET_64BIT
 
 	}
 }
