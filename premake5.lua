@@ -1,3 +1,6 @@
+toolset("v143")
+systemversion("10.0.20348.0")
+
 workspace "rax"
 	location ".\\build\\"
 	startproject "rax-tests"

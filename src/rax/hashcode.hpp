@@ -76,4 +76,16 @@ namespace rax
 	template <> static auto hashcode::compute(const float& obj, std::uint64_t seed) -> std::uint32_t;
 	template <> static auto hashcode::compute(const double& obj, std::uint64_t seed) -> std::uint32_t;
 	template <> static auto hashcode::compute(const string& obj, std::uint64_t seed) -> std::uint32_t;
+
+	template <typename T> struct hash
+	{
+		RAX_INLINE auto operator()(const T& obj) const
+		{
+			return hashcode::compute<T>(obj);
+		}
+		RAX_INLINE auto operator()(const T& obj, std::uint64_t seed)
+		{
+			return hashcode::compute<T>(obj, seed);
+		}
+	};
 }

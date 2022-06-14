@@ -7,16 +7,21 @@
 
 namespace rax
 {
-	template <typename T> class refptr
+	template <typename T, bool thread_safe = false, typename alloc = allocator> class refptr
 	{
 	private:
+		static_assert(sizeof(std::uint32_t) == sizeof(std::atomic_uint32_t));
+
+		static constexpr auto ptr_offset = sizeof(std::uint32_t);
+		static constexpr auto ref_offset = sizeof(std::uint32_t);
+
 		T* ptr_;
 
 		RAX_INLINE refptr()
 		{
-			auto data = ::calloc(sizeof(T) + sizeof(std::uint32_t), 1u);
+			auto data = alloc().allocate_no_init(sizeof(T) + ptr_offset);
 
-			this->ptr_ = reinterpret_cast<T*>(reinterpret_cast<std::uint8_t*>(data) + sizeof(std::uint32_t));
+			this->ptr_ = reinterpret_cast<T*>(reinterpret_cast<std::uint8_t*>(data) + ptr_offset);
 
 			this->increment_ref();
 		}
@@ -24,16 +29,38 @@ namespace rax
 		RAX_INLINE void increment_ref()
 		{
 			// reference counter is located right before stored pointer
-			++(*reinterpret_cast<std::uint32_t*>(reinterpret_cast<std::uint8_t*>(this->ptr_) - sizeof(std::uint32_t)));
+			if constexpr (thread_safe)
+			{
+				++(*reinterpret_cast<std::atomic_uint32_t*>(this->ptr_ - ref_offset));
+			}
+			else
+			{
+				++(*reinterpret_cast<std::uint32_t*>(this->ptr_ - ref_offset));
+			}
 		}
 		RAX_INLINE void decrement_ref()
 		{
 			// reference counter is located right before stored pointer
-			--(*reinterpret_cast<std::uint32_t*>(reinterpret_cast<std::uint8_t*>(this->ptr_) - sizeof(std::uint32_t)));
+			if constexpr (thread_safe)
+			{
+				--(*reinterpret_cast<std::atomic_uint32_t*>(this->ptr_ - ref_offset));
+			}
+			else
+			{
+				--(*reinterpret_cast<std::uint32_t*>(this->ptr_ - ref_offset));
+			}
 		}
 		RAX_INLINE auto reference_num() const -> std::uint32_t
 		{
-			return *reinterpret_cast<std::uint32_t*>(reinterpret_cast<std::uint8_t*>(this->ptr_) - sizeof(std::uint32_t));
+			// reference counter is located right before stored pointer
+			if constexpr (thread_safe)
+			{
+				return *reinterpret_cast<std::atomic_uint32_t*>(this->ptr_ - ref_offset);
+			}
+			else
+			{
+				return *reinterpret_cast<std::uint32_t*>(this->ptr_ - ref_offset);
+			}
 		}
 		RAX_INLINE void destroy_value()
 		{
@@ -50,7 +77,7 @@ namespace rax
 			{
 				this->ptr_->~T();
 
-				::free(reinterpret_cast<std::uint8_t*>(this->ptr_) - sizeof(std::uint32_t));
+				alloc().free(reinterpret_cast<std::uint8_t*>(this->ptr_) - ptr_offset);
 
 				this->ptr_ = nullptr;
 			}
@@ -73,10 +100,13 @@ namespace rax
 		{
 			if (this != &other)
 			{
+				// this might be a reassignment, hence decrement reference of the current object
 				this->destroy_value();
 
+				// assign new pointer to the current one
 				this->ptr_ = other.ptr_;
 
+				// increment reference counter after assignment
 				this->increment_ref();
 			}
 
@@ -145,3 +175,4 @@ namespace rax
 }
 
 #define __makeref(T) rax::refptr<T>::make_ref()
+#define __makerefsafe(T) rax::refptr<T, true>::make_ref()

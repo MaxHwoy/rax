@@ -75,7 +75,7 @@ namespace rax
 			return value;
 		}
 
-		template <typename T> RAX_INLINE auto clamp(T value, T min, T max) -> T
+		template <typename T> RAX_INLINE static auto clamp(T value, T min, T max) -> T
 		{
 			value = (value < min) ? min : value;
 			value = (value > max) ? max : value;
@@ -329,11 +329,6 @@ namespace rax
 			return tuple2(min, max);
 		}
 		
-		static auto sqrt(float value) -> float
-		{
-			const auto result = ::_mm_sqrt_ss(::_mm_load_ss(&value));
-
-			return result.m128_f32[0];
-		}
+		static auto sqrt(float value) -> float;
 	};
 }

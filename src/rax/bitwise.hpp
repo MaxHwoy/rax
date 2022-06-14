@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <limits>
 #include <rax/shared.hpp>
 
 namespace rax
@@ -8,15 +9,18 @@ namespace rax
 	class bitwise final
 	{
 	public:
-		RAX_INLINE static auto align_pow_2(std::uint32_t value, std::uint32_t pow2)
+		RAX_INLINE static auto align_pow_2(std::uint32_t value, std::uint32_t pow2) -> std::uint32_t
 		{
-			auto diff = pow2 - (value & (pow2 - 1u));
-			return value + (diff == pow2 ? 0 : diff);
+			return (value + pow2 - 1) & (std::numeric_limits<std::uint32_t>::max() - pow2 + 1);
 		}
 
 		RAX_INLINE static auto byte_swap(std::uint32_t value) -> std::uint32_t
 		{
-			return (value << 24) | ((value << 16) >> 8) | ((value << 8) >> 16) | (value >> 24);
+			return
+				((value & 0xFF000000) >> 24) |
+				((value & 0x00FF0000) >> 8) |
+				((value & 0x0000FF00) << 8) |
+				((value & 0x000000FF) << 24);
 		}
 
 		RAX_INLINE static bool is_pow_2(std::uint32_t value)
@@ -26,10 +30,10 @@ namespace rax
 
 		RAX_INLINE static auto next_pow_2(std::uint32_t value) -> std::uint32_t
 		{
-			//if (value == 0)
-			//{
-			//	return 0; // if only we could get rid of this if
-			//}
+			if (value == 0)
+			{
+				return 0; // if only we could get rid of this if
+			}
 
 			--value;
 

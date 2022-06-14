@@ -61,8 +61,7 @@ namespace rax
 		{
 			if (size > string::kmax_buffer_size)
 			{
-				auto align = rax::bitwise::align_pow_2(size, string::kalloc_alignment);
-				this->ptr_ = new char[align];
+				this->ptr_ = new char[rax::bitwise::align_pow_2(size, string::kalloc_alignment)];
 			}
 			else
 			{

@@ -6,42 +6,40 @@
 
 namespace rax
 {
-	class allocator final
+	class allocator
 	{
 	public:
-		using alloc_one = void*(*)(std::uint32_t size);
-		using alloc_lot = void*(*)(std::uint32_t size, std::uint32_t count);
-		using alloc_one_no_init = void*(*)(std::uint32_t size);
-		using alloc_lot_no_init = void*(*)(std::uint32_t size, std::uint32_t count);
+		allocator() = default;
 
-	private:
-		static allocator default_;
-		static allocator current_;
-
-		alloc_one alloc_one_;
-		alloc_lot alloc_lot_;
-		alloc_one_no_init alloc_one_no_init_;
-		alloc_lot_no_init alloc_lot_no_init_;
-
-		static auto default_alloc_one(std::uint32_t size) -> void*;
-		static auto default_alloc_lot(std::uint32_t size, std::uint32_t count) -> void*;
-		static auto default_alloc_one_no_init(std::uint32_t size) -> void*;
-		static auto default_alloc_lot_no_init(std::uint32_t size, std::uint32_t count) -> void*;
-
-	public:
-		allocator();
-
-		RAX_INLINE static auto get_default() -> const allocator&
+		template <typename T> RAX_INLINE auto allocate() const -> T*
 		{
-			return allocator::default_;
+			return reinterpret_cast<T*>(::calloc(1u, sizeof(T)));
 		}
-		RAX_INLINE static auto get_current() -> const allocator&
+		template <typename T> RAX_INLINE auto allocate_no_init() const -> T*
 		{
-			return allocator::current_;
+			return reinterpret_cast<T*>(::malloc(sizeof(T)));
 		}
-		RAX_INLINE static void set_current(const allocator& alloc)
+
+		RAX_INLINE auto allocate(size_t size) const -> void*
 		{
-			allocator::current_ = alloc;
+			return ::calloc(size, 1u);
+		}
+		RAX_INLINE auto allocate(size_t size, size_t count) const -> void*
+		{
+			return ::calloc(count, size);
+		}
+		RAX_INLINE auto allocate_no_init(size_t size) const -> void*
+		{
+			return ::malloc(size);
+		}
+		RAX_INLINE auto allocate_no_init(size_t size, size_t count) const -> void*
+		{
+			return ::malloc(size * count);
+		}
+
+		RAX_INLINE void free(void* ptr) const
+		{
+			::free(ptr);
 		}
 	};
 }

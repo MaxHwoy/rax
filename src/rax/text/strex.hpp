@@ -39,7 +39,7 @@ namespace rax::text
 		{
 			auto address = ptr;
 			while (*ptr++);
-			return ptr - address - doNotCountTerminator;
+			return static_cast<std::uint32_t>(ptr - address - doNotCountTerminator);
 		}
 
 		/// <summary>

@@ -6,15 +6,22 @@
 #include <algorithm>
 #include <rax/shared.hpp>
 #include <rax/action.hpp>
+#include <rax/allocator.hpp>
 #include <rax/arraysort.hpp>
 
 #pragma warning (disable: 6011)
 
 namespace rax
 {
-	template <typename T> class refarray
+	template <typename T, bool thread_safe = false, typename alloc = allocator> class refarray
 	{
 	private:
+		static_assert(sizeof(std::uint32_t) == sizeof(std::atomic_uint32_t));
+
+		static constexpr auto ptr_offset = sizeof(std::uint64_t);
+		static constexpr auto len_offset = sizeof(std::uint64_t);
+		static constexpr auto ref_offset = sizeof(std::uint32_t);
+
 		static refarray empty_;
 
 		// size of refarray should equal exactly one pointer
@@ -26,22 +33,45 @@ namespace rax
 		RAX_INLINE void increment_ref()
 		{
 			// reference counter is located right before stored pointer
-			++(*reinterpret_cast<std::uint32_t*>(this->ptr_ - sizeof(std::uint32_t)));
+			if constexpr (thread_safe)
+			{
+				++(*reinterpret_cast<std::atomic_uint32_t*>(this->ptr_ - ref_offset));
+			}
+			else
+			{
+				++(*reinterpret_cast<std::uint32_t*>(this->ptr_ - ref_offset));
+			}
 		}
 		RAX_INLINE void decrement_ref()
 		{
 			// reference counter is located right before stored pointer
-			--(*reinterpret_cast<std::uint32_t*>(this->ptr_ - sizeof(std::uint32_t)));
+			if constexpr (thread_safe)
+			{
+				--(*reinterpret_cast<std::atomic_uint32_t*>(this->ptr_ - ref_offset));
+			}
+			else
+			{
+				--(*reinterpret_cast<std::uint32_t*>(this->ptr_ - ref_offset));
+			}
 		}
 		RAX_INLINE auto reference_num() -> std::uint32_t
 		{
-			return *reinterpret_cast<std::uint32_t*>(this->ptr_ - sizeof(std::uint32_t));
+			// reference counter is located right before stored pointer
+			if constexpr (thread_safe)
+			{
+				return *reinterpret_cast<std::atomic_uint32_t*>(this->ptr_ - ref_offset);
+			}
+			else
+			{
+				return *reinterpret_cast<std::uint32_t*>(this->ptr_ - ref_offset);
+			}
 		}
 		RAX_INLINE void destroy_array()
 		{
 			// if already nullptr, no need to do stuff further
 			// this happens only when this array was moved prior
 			// or if this array has already been destroyed manually
+
 			if (this->ptr_ == nullptr)
 			{
 				return;
@@ -56,7 +86,14 @@ namespace rax
 			// if no references exists, destroy array
 			if (refcount == 0u)
 			{
-				::free(this->ptr_ - sizeof(std::uint64_t)); // #TODO: destruction???
+				auto size = this->length();
+
+				for (std::uint32_t i = 0u; i < size; ++i)
+				{
+					(reinterpret_cast<T*>(this->ptr_) + i)->~T();
+				}
+
+				alloc().free(this->ptr_ - ptr_offset);
 
 				this->ptr_ = nullptr;
 			}
@@ -71,14 +108,34 @@ namespace rax
 			// minimum allocation size will always be 8 bytes where
 			// 4 bytes are used for length and other 4 for ref count
 
+			// pointer to the actual beginning of the refarray
+			std::uint8_t* data;
+
 			// allocate element storage with minimum size of 8 bytes
-			auto data = ::calloc(sizeof(std::uint64_t) + size * sizeof(T), 1u);
+			if constexpr (std::is_default_constructible<T>::value)
+			{
+				data = reinterpret_cast<std::uint8_t*>(alloc().allocate_no_init(ptr_offset + size * sizeof(T)));
+			}
+			else
+			{
+				data = reinterpret_cast<std::uint8_t*>(alloc().allocate(ptr_offset + size * sizeof(T)));
+			}
 
 			// store size of the array at the given pointer
 			*reinterpret_cast<std::uint32_t*>(data) = size;
+			*reinterpret_cast<std::uint32_t*>(data + ref_offset) = 0u;
 
 			// ptr_ will be pointing right after array size and ref counter
-			this->ptr_ = reinterpret_cast<std::uint8_t*>(data) + sizeof(std::uint64_t);
+			this->ptr_ = reinterpret_cast<std::uint8_t*>(data) + ptr_offset;
+
+			// initialize all the entries in the array to default values
+			if constexpr (std::is_default_constructible<T>::value)
+			{
+				for (std::uint32_t i = 0u; i < size; ++i)
+				{
+					__init(reinterpret_cast<T*>(this->ptr_) + i) T();
+				}
+			}
 
 			// set initial reference counter to 1
 			this->increment_ref();
@@ -103,16 +160,13 @@ namespace rax
 			// if we assign to itself, no need in incrementing
 			if (this != &other)
 			{
-				// try destroy this array in case its
-				// reference count will be 0
+				// try destroy this array in case this is a reassignment
 				this->destroy_array();
 
-				// after that assign new pointer and size
-				// and increment reference counter
+				// assign new pointer and size to this array
 				this->ptr_ = other.ptr_;
 
-				// increment reference counter of the new
-				// array received
+				// increment reference counter of the this array
 				this->increment_ref();
 			}
 
@@ -151,7 +205,7 @@ namespace rax
 
 		RAX_INLINE auto length() const -> std::uint32_t
 		{
-			return *reinterpret_cast<std::uint32_t*>(this->ptr_ - sizeof(std::uint64_t));
+			return *reinterpret_cast<std::uint32_t*>(this->ptr_ - len_offset);
 		}
 
 		RAX_INLINE auto start() -> T*
@@ -412,7 +466,7 @@ namespace rax
 		}
 	};
 
-	template <typename T> refarray<T> refarray<T>::empty_ = refarray<T>(0u);
+	// template <typename T, bool thread_safe, typename alloc = allocator> refarray<T, thread_safe, alloc> refarray<T, thread_safe, alloc>::empty_ = refarray<T, thread_safe, alloc>(0u);
 
 	// we assert size of a reference array to be same as size of one pointer
 	// that will be 4 bytes on 32-bit and 8 bytes on 64-bit systems
