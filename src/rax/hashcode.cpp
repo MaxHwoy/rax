@@ -111,6 +111,11 @@ namespace rax
 		return 0u; // #TODO
 	}
 
+	auto hashcode::get_entropy() -> std::uint64_t
+	{
+		return 0ui64; // #TODO
+	}
+
 	//
 	// inbuilt type hashcode computation
 	//
@@ -192,6 +197,20 @@ namespace rax
 		return hashcode::compute(reinterpret_cast<const void*>(obj.as_native()), obj.length());
 	}
 
+	template <> static auto hashcode::compute(const std::string& obj) -> std::uint32_t
+	{
+		auto value = std::hash<std::string>()(obj);
+
+		if constexpr (sizeof(std::uint32_t) == sizeof(size_t))
+		{
+			return static_cast<std::uint32_t>(value);
+		}
+		else
+		{
+			return static_cast<std::uint32_t>(value) ^ static_cast<std::uint32_t>(value >> 32);
+		}
+	}
+
 	template <> static auto hashcode::compute(const char& obj, std::uint64_t seed) -> std::uint32_t
 	{
 		return static_cast<std::uint32_t>(obj); // ignore seed
@@ -266,6 +285,16 @@ namespace rax
 			return 0u;
 		}
 
-		return hashcode::compute(reinterpret_cast<const void*>(obj.as_native()), obj.length(), seed);
+		return hashcode::compute(obj.as_native(), obj.length(), seed);
+	}
+
+	template <> static auto hashcode::compute(const std::string& obj, std::uint64_t seed) -> std::uint32_t
+	{
+		if (obj.size() == 0u)
+		{
+			return 0u;
+		}
+
+		return hashcode::compute(obj.c_str(), static_cast<std::uint32_t>(obj.size()), seed);
 	}
 }

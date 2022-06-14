@@ -31,21 +31,14 @@ template <typename T = alloc> struct something
 
 void test()
 {
-	auto ref = __makeref(std::int32_t);
-	auto arr = rax::refarray<std::int32_t>(2u);
+	rax::collections::templates::map<std::int32_t, std::int32_t> mapper;
 
-	*ref = 5;
+	mapper[6] = 7;
+	mapper[7] = 8;
+	mapper[8] = 9;
 
-	::printf("%d\n", *ref);
+	::printf("%d", mapper[7]);
 
-	auto some = something<alloc>();
-	auto oofe = something<reall>();
-
-	some.perform();
-	oofe.perform();
-
-	auto key = rax::hash<std::int32_t>()(1000);
-	
 	std::int32_t t = 0;
 }
 

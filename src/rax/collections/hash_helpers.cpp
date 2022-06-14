@@ -39,9 +39,4 @@ namespace rax::collections
 
 		return hash_helpers::get_prime(num);
 	}
-
-	auto hash_helpers::get_entropy() -> std::uint64_t
-	{
-		return 0u; // #TODO
-	}
 }

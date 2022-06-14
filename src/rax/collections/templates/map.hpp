@@ -4,353 +4,458 @@
 #include <memory>
 #include <utility>
 #include <initializer_list>
+#include <rax/hashcode.hpp>
 #include <rax/collections/hash_helpers.hpp>
 #include <rax/collections/templates/keyvalue_pair.hpp>
 #include <rax/collections/templates/comparer.hpp>
 
 namespace rax::collections::templates
 {
-	template <typename TKey, typename TValue> class map final
+	template <
+		typename tkey,
+		typename tvalue,
+		typename comparer = equality_comparer<tkey>,
+		typename alloc = rax::allocator
+	> class map
 	{
 	private:
-		struct entry
+		enum insertion_behavior : std::uint8_t
 		{
-			std::uint32_t hashcode;
-			std::int32_t next;
-			TKey key;
-			TValue value;
-
-			entry()
-			{
-			}
-			entry(const entry& other)
-			{
-				this->hashcode = other.hashcode;
-				this->next = other.next;
-				this->key = std::move(other.key);
-				this->value = std::move(other.value);
-			}
-			entry(entry&& other) noexcept
-			{
-				this->hashcode = other.hashcode;
-				this->next = other.next;
-				this->key = std::move(other.key);
-				this->value = std::move(other.value);
-			}
-			entry& operator=(const entry& other)
-			{
-				if (this != &other)
-				{
-					this->hashcode = other.hashcode;
-					this->next = other.next;
-					this->key = std::move(other.key);
-					this->value = std::move(other.value);
-				}
-
-				return *this;
-			}
+			none = 0,
+			overwrite_existing = 1,
+			throw_on_existing = 2
 		};
 
-		std::int32_t* buckets_;
-		entry* entries_;
-		std::uint32_t capacity_;
-		std::uint32_t count_;
-		std::int32_t free_list_;
-		std::uint32_t free_count_;
-		equality_comparer<TKey> comparer_;
+		struct entry
+		{
+			std::uint32_t hash_code;
+			std::int32_t next;
+			tkey key;
+			tvalue value;
+		};
+
+	public:
+		class key_collection
+		{
+
+		};
+
+		class value_collection
+		{
+
+		};
 
 	private:
+		entry* m_entries;
+		std::int32_t* m_buckets;
+		std::uint32_t m_buckets_len;
+		std::uint32_t m_entries_len;
+		std::uint64_t m_fastModMultiplier;
+		std::int32_t m_count;
+		std::int32_t m_freeList;
+		std::int32_t m_freeCount;
+		comparer m_comparer;
+		static inline const std::int32_t k_start_of_free_list = -3;
+
+	public:
+		map() : map(0u)
+		{
+		}
+		map(std::uint32_t capacity) :
+			m_entries(nullptr),
+			m_buckets(nullptr),
+			m_buckets_len(0u),
+			m_entries_len(0u),
+			m_fastModMultiplier(0ui64),
+			m_count(0),
+			m_freeList(0),
+			m_freeCount(0)
+		{
+			if (capacity < 0)
+			{
+				capacity = 0;
+			}
+
+			if (capacity > 0)
+			{
+				this->initialize(capacity);
+			}
+
+			if constexpr (std::is_same<tkey, string>::value)
+			{
+				// #TODO assign correct string comparer
+
+				this->m_comparer = comparer();
+			}
+			else
+			{
+				this->m_comparer = comparer();
+			}
+		}
+
+	private:
+		void add_range(const map<tkey, tvalue>& mapper)
+		{
+			if (mapper.count() == 0)
+			{
+				// Nothing to copy, all done
+				return;
+			}
+
+			// This is not currently a true .add_range as it needs to be an initialized map
+			// of the correct size, and also an empty map with no current entities (and no argument checks).
+			assert(mapper.m_entries != nullptr);
+			assert(this->m_entries != nullptr);
+			assert(this->m_entries_len >= mapper.count());
+			assert(this->m_count == 0);
+
+			auto old_entries = map.m_entries;
+
+			// #TODO
+		}
+
+		RAX_INLINE auto get_bucket(std::uint32_t hash_code) const -> std::int32_t*
+		{
+			return this->m_buckets + hash_helpers::fast_mod(hash_code, static_cast<std::uint32_t>(this->m_buckets_len), this->m_fastModMultiplier);
+		}
+
 		void initialize(std::uint32_t capacity)
 		{
-			this->capacity_ = hash_helpers::get_prime(capacity);
+			auto size = hash_helpers::get_prime(capacity);
+			auto buckets = reinterpret_cast<std::int32_t*>(alloc().allocate(sizeof(std::int32_t), size));
+			auto entries = reinterpret_cast<entry*>(alloc().allocate(sizeof(entry), size));
 
-			this->buckets_ = new std::int32_t[this->capacity_];
-			this->entries_ = new entry[this->capacity_];
-
-			this->count_ = 0u;
-			this->free_list_ = -1;
-			this->free_count_ = 0u;
-
-			::memset(this->buckets_, -1, this->capacity_ * sizeof(std::int32_t));
+			this->m_freeList = -1;
+			this->m_buckets = buckets;
+			this->m_entries = entries;
+			this->m_buckets_len = size;
+			this->m_entries_len = size;
+			this->m_fastModMultiplier = hash_helpers::get_fast_mod_multiplier(static_cast<std::uint32_t>(size));
 		}
-		auto find_entry(const TKey& key) -> std::int32_t
-		{
-			auto hash = this->comparer_.get_hashcode(&key) & INT32_MAX;
 
-			for (std::int32_t i = this->buckets_[hash % this->capacity_]; i >= 0; i = this->entries_[i].next)
+		auto find_value(tkey key) const -> tvalue*
+		{
+			entry* entry_ptr = nullptr;
+
+			if (this->m_buckets != nullptr)
 			{
-				if (this->entries_[i].hashcode == hash && this->comparer_.equals(&this->entries_[i].key, &key))
+				assert(this->m_entries != nullptr);
+
+				auto hash_code = this->m_comparer.get_hashcode(key);
+				auto i = *this->get_bucket(hash_code);
+				auto collision_count = 0u;
+
+				i--;
+
+				do
 				{
-					return i;
+					if (static_cast<std::uint32_t>(i) >= static_cast<std::uint32_t>(this->m_entries_len))
+					{
+						return nullptr;
+					}
+
+					entry_ptr = this->m_entries + i;
+
+					if (entry_ptr->hash_code == hash_code && this->m_comparer.equals(entry_ptr->key, key))
+					{
+						return &entry_ptr->value;
+					}
+
+					i = entry_ptr->next;
+					collision_count++;
+
+				} while (collision_count <= static_cast<std::uint32_t>(this->m_entries_len));
+
+				throw new std::exception("Concurrent operations are not supported");
+			}
+
+			return nullptr;
+		}
+		auto find_value(const tkey* key) const -> tvalue*
+		{
+			if (key == nullptr)
+			{
+				return nullptr;
+			}
+
+			entry* entry_ptr = nullptr;
+
+			if (this->m_buckets != nullptr)
+			{
+				assert(this->m_entries != nullptr);
+
+				auto hash_code = this->m_comparer.get_hashcode(key);
+				auto i = *this->get_bucket(hash_code);
+				auto collision_count = 0u;
+
+				i--;
+
+				do
+				{
+					if (static_cast<std::uint32_t>(i) >= static_cast<std::uint32_t>(this->m_entries_len))
+					{
+						return nullptr;
+					}
+
+					entry_ptr = this->m_entries + i;
+
+					if (entry_ptr->hash_code == hash_code && this->m_comparer.equals(entry_ptr->key, *key))
+					{
+						return &entry_ptr->value;
+					}
+
+					i = entry_ptr->next;
+					collision_count++;
+
+				} while (collision_count <= static_cast<std::uint32_t>(this->m_entries_len));
+
+				throw new std::exception("Concurrent operations are not supported");
+			}
+
+			return nullptr;
+		}
+
+		auto get_value_ptr_or_add_default(tkey key) -> tvalue&
+		{
+			if (this->m_buckets == nullptr)
+			{
+				this->initialize(0u);
+			}
+
+			assert(this->m_buckets != nullptr);
+			assert(this->m_entries != nullptr);
+
+			auto entries = this->m_entries;
+
+			auto hash_code = this->m_comparer.get_hashcode(key);
+			auto bucket = this->get_bucket(hash_code);
+			auto collision_count = 0u;
+			auto i = *bucket - 1;
+
+			while (true)
+			{
+				if (static_cast<std::uint32_t>(i) >= static_cast<std::uint32_t>(this->m_entries_len))
+				{
+					break;
+				}
+
+				if (entries[i].hash_code == hash_code && this->m_comparer.equals(entries[i].key, key))
+				{
+					return entries[i].value;
+				}
+
+				i = entries[i].next;
+				collision_count++;
+
+				if (collision_count > static_cast<std::uint32_t>(this->m_entries_len))
+				{
+					throw new std::exception("Concurrent operations are not supported");
 				}
 			}
 
-			return -1;
-		}
-		bool insert(const TKey& key, const TValue& value, bool force)
-		{
-			auto hashcode = this->comparer_.get_hashcode(&key) & INT32_MAX;
-			auto position = hashcode % this->capacity_;
-			auto number = 0u;
+			int index;
 
-			for (std::int32_t i = this->buckets_[position]; i >= 0; i = this->entries_[i].next)
+			if (this->m_freeCount > 0)
 			{
-				if (this->entries_[i].hashcode == hashcode &&
-					this->comparer_.equals(&this->entries_[i].key, &key))
-				{
-					if (!force)
-					{
-						return false;
-					}
-					else
-					{
-						this->entries_[i].value = value;
-						return true;
-					}
-				}
-
-				++number;
-			}
-
-			std::int32_t available = 0;
-
-			if (this->free_count_ > 0)
-			{
-				available = this->free_list_;
-				this->free_list_ = this->entries_[available].next;
-				--this->free_count_;
+				index = this->m_freeList;
+				this->m_freeList = k_start_of_free_list - entries[this->m_freeList].next;
+				this->m_freeCount--;
 			}
 			else
 			{
-				if (this->count_ == this->capacity_)
+				int count = this->m_count;
+
+				if (count == this->m_entries_len)
 				{
 					this->resize();
-					position = hashcode % this->capacity_;
+					bucket = this->get_bucket(hash_code);
 				}
 
-				available = this->count_;
-				++this->count_;
+				index = count;
+				this->m_count = count + 1;
+				entries = this->m_entries;
 			}
 
-			auto& newentry = this->entries_[available];
+			auto entry_ptr = entries + index;
 
-			newentry.hashcode = hashcode;
-			newentry.next = this->buckets_[position];
-			newentry.key = key;
-			newentry.value = value;
+			entry_ptr->hash_code = hash_code;
+			entry_ptr->next = *bucket - 1;
+			entry_ptr->key = key;
 
-			this->buckets_[position] = available;
+			*bucket = index + 1;
 
-			if (number > 100 && equality_comparer<TKey>::is_well_known_comparer(this->comparer_))
+			if (this->m_comparer.same_as<non_randomized_string_comparer::ordinal_comparer>() ||
+				this->m_comparer.same_as<non_randomized_string_comparer::ordinal_ignore_case_comparer>())
 			{
-				this->comparer_ = equality_comparer<TKey>(true);
-				this->resize(this->capacity_, true);
-			}
-
-			return true;
-		}
-		bool moveto(TKey&& key, TValue&& value, bool force)
-		{
-			auto hashcode = this->comparer_.get_hashcode(&key) & INT32_MAX;
-			auto position = hashcode % this->capacity_;
-			auto number = 0u;
-
-			for (std::int32_t i = this->buckets_[position]; i >= 0; i = this->entries_[i].next)
-			{
-				if (this->entries_[i].hashcode == hashcode &&
-					this->comparer_.equals(&this->entries_[i].key, &key))
+				if (collision_count > 100)
 				{
-					if (!force)
-					{
-						return false;
-					}
-					else
-					{
-						this->entries_[i].value = value;
-						return true;
-					}
-				}
+					this->resize(this->m_entries_len, true);
 
-				++number;
+					return *this->find_value(key);
+				}
 			}
 
-			std::int32_t available = 0;
-
-			if (this->free_count_ > 0)
+			return entry_ptr->value;
+		}
+		auto get_value_ptr_or_add_default(const tkey* key) -> tvalue&
+		{
+			if (key == nullptr)
 			{
-				available = this->free_list_;
-				this->free_list_ = this->entries_[available].next;
-				--this->free_count_;
+				throw std::exception("Key pointer cannot be a null pointer");
+			}
+
+			if (this->m_buckets == nullptr)
+			{
+				this->initialize(0u);
+			}
+
+			assert(this->m_buckets != nullptr);
+			assert(this->m_entries != nullptr);
+
+			auto entries = this->m_entries;
+
+			auto hash_code = this->m_comparer.get_hashcode(key);
+			auto bucket = this->get_bucket(hash_code);
+			auto collision_count = 0u;
+			auto i = *bucket - 1;
+
+			while (true)
+			{
+				if (static_cast<std::uint32_t>(i) >= static_cast<std::uint32_t>(this->m_entries_len))
+				{
+					break;
+				}
+
+				if (entries[i].hash_code == hash_code && this->m_comparer.equals(entries[i].key, *key))
+				{
+					return entries[i].value;
+				}
+
+				i = entries[i].next;
+				collision_count++;
+
+				if (collision_count > static_cast<std::uint32_t>(this->m_entries_len))
+				{
+					throw new std::exception("Concurrent operations are not supported");
+				}
+			}
+
+			int index;
+
+			if (this->m_freeCount > 0)
+			{
+				index = this->m_freeList;
+				this->m_freeList = this->kStartOfFreeList - entries[this->m_freeList].next;
+				this->m_freeCount--;
 			}
 			else
 			{
-				if (this->count_ == this->capacity_)
+				int count = this->m_count;
+
+				if (count == this->m_entries_len)
 				{
 					this->resize();
-					position = hashcode % this->capacity_;
+					bucket = this->get_bucket(hash_code);
 				}
 
-				available = this->count_;
-				++this->count_;
+				index = count;
+				this->m_count = count + 1;
+				entries = this->m_entries;
 			}
 
-			auto& newentry = this->entries_[available];
+			auto entry_ptr = entries + index;
 
-			newentry.hashcode = hashcode;
-			newentry.next = this->buckets_[position];
-			newentry.key = key;
-			newentry.value = value;
+			entry_ptr->hash_code = hash_code;
+			entry_ptr->next = *bucket - 1;
+			entry_ptr->key = *key;
 
-			this->buckets_[position] = available;
+			*bucket = index + 1;
 
-			if (number > 100 && equality_comparer<TKey>::is_well_known_comparer(this->comparer_))
+			if (this->m_comparer.same_as<non_randomized_string_comparer::ordinal_comparer>() ||
+				this->m_comparer.same_as<non_randomized_string_comparer::ordinal_ignore_case_comparer>())
 			{
-				this->comparer_ = equality_comparer<TKey>(true);
-				this->resize(this->capacity_, true);
+				if (collision_count > 100)
+				{
+					this->resize(this->m_entries_len, true);
+
+					return *this->find_value(key);
+				}
 			}
 
-			return true;
+			return entry_ptr->value;
 		}
+
 		void resize()
 		{
-			this->resize(hash_helpers::expand_prime(this->count_), false);
+
 		}
-		void resize(std::uint32_t newSize, bool forceNewHashes)
+		void resize(int new_size, bool force_new_hash_codes)
 		{
-			auto buckets = new std::int32_t[newSize];
-			auto entries = new entry[newSize];
 
-			::memset(buckets, -1, newSize * sizeof(std::int32_t));
-
-			for (std::uint32_t i = 0u; i < this->count_; ++i)
-			{
-				entries[i] = this->entries_[i];
-			}
-
-			if (forceNewHashes)
-			{
-				for (std::uint32_t i = 0u; i < this->count_; ++i)
-				{
-					if (entries[i].hashcode != UINT32_MAX)
-					{
-						entries[i].hashcode = this->comparer_.get_hashcode(&entries[i].key) & INT32_MAX;
-					}
-				}
-			}
-
-			for (std::uint32_t i = 0u; i < this->count_; ++i)
-			{
-				if (entries[i].hashcode != -1)
-				{
-					auto num = entries[i].hashcode % newSize;
-					entries[i].next = buckets[num];
-					buckets[num] = static_cast<std::int32_t>(i);
-				}
-			}
-
-			delete[] this->buckets_;
-			delete[] this->entries_;
-
-			this->buckets_ = buckets;
-			this->entries_ = entries;
-			this->capacity_ = newSize;
 		}
 
 	public:
-		map() : map(0u, equality_comparer<TKey>::get_default())
+		auto operator[](tkey key) -> tvalue&
 		{
+			return this->get_value_ptr_or_add_default(key);
 		}
-		map(std::uint32_t capacity) : map(capacity, equality_comparer<TKey>::get_default())
+		auto operator[](tkey* key) -> tvalue&
 		{
+			return this->get_value_ptr_or_add_default(key);
 		}
-		map(const equality_comparer<TKey>& comparer) : map(0u, comparer)
+
+		auto count() const -> std::int32_t
 		{
+			return this->m_count - this->m_freeCount;
 		}
-		map(std::uint32_t capacity, const equality_comparer<TKey>& comparer)
-		{
-			capacity = capacity < 7u ? 7u : capacity;
-			
-			this->comparer_ = comparer;
+		auto keys() const->key_collection;
+		auto values() const->value_collection;
 
-			this->initialize(capacity);
+		bool contains_key(tkey key) const
+		{
+			return this->find_value(key) != nullptr;
 		}
-		map(std::initializer_list<keyvalue_pair<TKey, TValue>> init_list)
+		bool contains_key(const tkey* key) const
 		{
-			auto capacity = init_list.size() < 7u ? 7u : init_list.size();
+			return this->find_value(key) != nullptr;
+		}
 
-			this->initialize(capacity);
-
-			this->comparer_ = equality_comparer<TKey>::get_default();
-
-			for (auto it = init_list.begin(); it != init_list.end(); ++it)
+		bool contains_value(tvalue value) const
+		{
+			for (std::int32_t i = 0; i < this.m_count; ++i)
 			{
-				this->add(it->key(), it->value());
-			}
-		}
-
-		// initializer list too
-		// we need generic enumerators too
-		
-		map(const map& other);
-		map(map&& other);
-		map& operator=(const map& other);
-		~map()
-		{
-			// cleanup
-		}
-
-		auto count() const -> std::uint32_t
-		{
-			return this->count_;
-		}
-		auto comparer() const -> const equality_comparer<TKey>&
-		{
-			return this->comparer_;
-		}
-
-		auto operator[](const TKey& key) -> TValue&
-		{
-			return TValue{};
-		}
-		bool add(const TKey& key, const TValue& value)
-		{
-			return this->insert(key, value, false);
-		}
-		void clear()
-		{
-
-		}
-		bool contains_key(const TKey& key) const
-		{
-			return false;
-		}
-		bool contains_value(const TValue& value) const
-		{
-			return false;
-		}
-		bool put(TKey&& key, TValue&& value)
-		{
-			return this->moveto(std::forward<TKey>(key), std::forward<TValue>(value), false);
-		}
-		bool remove(const TKey& key)
-		{
-			return false;
-		}
-		bool try_get_value(const TKey& key, TValue& value)
-		{
-			auto result = this->find_entry(key);
-
-			if (result >= 0)
-			{
-				value = this->entries_[result].value;
-				return true;
+				if (this->m_entries[i].next >= -1 && value == this->m_entries[i].value)
+				{
+					return true;
+				}
 			}
 
 			return false;
 		}
-		void update(const TKey& key, const TValue& value)
+		bool contains_value(const tvalue* value) const
 		{
-			this->insert(key, value, true);
+			for (std::int32_t i = 0; i < this.m_count; ++i)
+			{
+				if (this->m_entries[i].next >= -1 && *value == this->m_entries[i].value)
+				{
+					return true;
+				}
+			}
+
+			return false;
+		}
+
+		bool try_get_value(tkey key, tvalue*& value) const
+		{
+			value = this->find_value(key);
+
+			return value != nullptr;
+		}
+		bool try_get_value(const tkey* key, tvalue*& value) const
+		{
+			value = this->find_value(key);
+
+			return value != nullptr;
 		}
 	};
 }

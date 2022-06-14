@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <string>
 #include <rax/shared.hpp>
 #include <rax/bitwise.hpp>
 #include <rax/string.hpp>
@@ -20,6 +21,8 @@ namespace rax
 		
 		static auto combine(std::uint32_t key1, std::uint32_t key2) -> std::uint32_t;
 		static auto entropy(std::uint32_t hash, std::uint64_t entr) -> std::uint32_t;
+
+		static auto get_entropy() -> std::uint64_t;
 
 		template <typename T> static auto compute(const T& obj) -> std::uint32_t
 		{
@@ -63,6 +66,7 @@ namespace rax
 	template <> static auto hashcode::compute(const float& obj) -> std::uint32_t;
 	template <> static auto hashcode::compute(const double& obj) -> std::uint32_t;
 	template <> static auto hashcode::compute(const string& obj) -> std::uint32_t;
+	template <> static auto hashcode::compute(const std::string& obj) -> std::uint32_t;
 
 	template <> static auto hashcode::compute(const char& obj, std::uint64_t seed) -> std::uint32_t;
 	template <> static auto hashcode::compute(const std::int8_t& obj, std::uint64_t seed) -> std::uint32_t;
@@ -76,16 +80,5 @@ namespace rax
 	template <> static auto hashcode::compute(const float& obj, std::uint64_t seed) -> std::uint32_t;
 	template <> static auto hashcode::compute(const double& obj, std::uint64_t seed) -> std::uint32_t;
 	template <> static auto hashcode::compute(const string& obj, std::uint64_t seed) -> std::uint32_t;
-
-	template <typename T> struct hash
-	{
-		RAX_INLINE auto operator()(const T& obj) const
-		{
-			return hashcode::compute<T>(obj);
-		}
-		RAX_INLINE auto operator()(const T& obj, std::uint64_t seed)
-		{
-			return hashcode::compute<T>(obj, seed);
-		}
-	};
+	template <> static auto hashcode::compute(const std::string& obj, std::uint64_t seed) -> std::uint32_t;
 }

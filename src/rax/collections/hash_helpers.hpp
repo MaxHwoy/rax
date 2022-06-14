@@ -2,10 +2,22 @@
 
 #include <cstdint>
 #include <rax/shared.hpp>
+#include <rax/hashcode.hpp>
+#include <rax/allocator.hpp>
 #include <rax/math.hpp>
 
 namespace rax::collections
 {
+	namespace templates
+	{
+		template <
+			typename tkey,
+			typename tvalue,
+			typename comparer,
+			typename alloc
+		> class map;
+	}
+
 	class hash_helpers final
 	{
 	private:
@@ -22,10 +34,8 @@ namespace rax::collections
 			5999471u, 7199369u
 		};
 
-	public:
 		static auto get_prime(std::uint32_t number) -> std::uint32_t;
 		static auto expand_prime(std::uint32_t number) -> std::uint32_t;
-		static auto get_entropy() -> std::uint64_t;
 
 		RAX_INLINE static bool is_prime(std::uint32_t number)
 		{
@@ -35,5 +45,21 @@ namespace rax::collections
 		{
 			return hash_helpers::primes_[0];
 		}
+
+		RAX_INLINE static auto get_fast_mod_multiplier(std::uint32_t divisor)
+		{
+			return UINT64_MAX / divisor + 1;
+		}
+		RAX_INLINE static auto fast_mod(std::uint32_t value, std::uint32_t divisor, std::uint64_t multiplier) -> std::uint32_t
+		{
+			return (std::uint32_t)(((((multiplier * value) >> 32) + 1) * divisor) >> 32);
+		}
+
+		template <
+			typename tkey,
+			typename tvalue,
+			typename comparer,
+			typename alloc
+		> friend class rax::collections::templates::map;
 	};
 }

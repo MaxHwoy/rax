@@ -11,7 +11,15 @@
 
 namespace rax
 {
-	enum class string_comparison : std::int32_t;
+	enum class string_comparison : std::int32_t
+	{
+		current_culture,
+		current_culture_ignore_case,
+		invariant_culture,
+		invariant_culture_ignore_case,
+		ordinal,
+		ordinal_ignore_case,
+	};
 
 	namespace globalization
 	{
