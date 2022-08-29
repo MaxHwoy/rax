@@ -30,7 +30,7 @@ namespace rax
 		return hash;
 	}
 
-	auto hashcode::compute(const void* ptr, std::uint32_t size) -> std::uint32_t
+	auto hashcode::compute_raw(const void* ptr, std::uint32_t size) -> std::uint32_t
 	{
 		auto i = 0u;
 		auto result = 0u;
@@ -50,7 +50,7 @@ namespace rax
 		return result;
 	}
 
-	auto hashcode::compute(const void* ptr, std::uint32_t size, std::uint64_t seed) -> std::uint32_t
+	auto hashcode::compute_raw(const void* ptr, std::uint32_t size, std::uint64_t seed) -> std::uint32_t
 	{
 		std::uint32_t st[2]
 		{
@@ -285,7 +285,7 @@ namespace rax
 			return 0u;
 		}
 
-		return hashcode::compute(obj.as_native(), obj.length(), seed);
+		return hashcode::compute_raw(obj.as_native(), obj.length(), seed);
 	}
 
 	template <> static auto hashcode::compute(const std::string& obj, std::uint64_t seed) -> std::uint32_t
@@ -295,6 +295,6 @@ namespace rax
 			return 0u;
 		}
 
-		return hashcode::compute(obj.c_str(), static_cast<std::uint32_t>(obj.size()), seed);
+		return hashcode::compute_raw(obj.c_str(), static_cast<std::uint32_t>(obj.size()), seed);
 	}
 }

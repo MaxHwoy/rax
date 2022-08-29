@@ -19,3 +19,8 @@
 #define where_object(T) typename std::enable_if<std::is_object<T>::value>::type* = nullptr
 #define where_pointer(T) typename std::enable_if<std::is_pointer<T>::value>::type* = nullptr
 #define where_reference(T) typename std::enable_if<std::is_reference<T>::value>::type* = nullptr
+
+template <typename T> inline constexpr bool is_blittable_v =
+std::is_reference_v<std::remove_cv_t<T>> || std::is_pointer_v<std::remove_cv_t<T>> || std::is_arithmetic_v<T> || std::is_enum_v<T>;
+
+template <typename T> struct is_blittable : std::bool_constant<is_blittable_v<T>> {};

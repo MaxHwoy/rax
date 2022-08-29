@@ -4,6 +4,7 @@
 #include <memory>
 #include <utility>
 #include <initializer_list>
+#include <rax/objective.hpp>
 #include <rax/hashcode.hpp>
 #include <rax/collections/hash_helpers.hpp>
 #include <rax/collections/templates/keyvalue_pair.hpp>
@@ -54,8 +55,9 @@ namespace rax::collections::templates
 		std::int32_t m_count;
 		std::int32_t m_freeList;
 		std::int32_t m_freeCount;
-		comparer m_comparer;
 		static inline const std::int32_t k_start_of_free_list = -3;
+
+		comparer m_comparer;
 
 	public:
 		map() : map(0u)
@@ -69,7 +71,8 @@ namespace rax::collections::templates
 			m_fastModMultiplier(0ui64),
 			m_count(0),
 			m_freeList(0),
-			m_freeCount(0)
+			m_freeCount(0),
+			m_comparer(comparer())
 		{
 			if (capacity < 0)
 			{
@@ -79,17 +82,6 @@ namespace rax::collections::templates
 			if (capacity > 0)
 			{
 				this->initialize(capacity);
-			}
-
-			if constexpr (std::is_same<tkey, string>::value)
-			{
-				// #TODO assign correct string comparer
-
-				this->m_comparer = comparer();
-			}
-			else
-			{
-				this->m_comparer = comparer();
 			}
 		}
 
@@ -116,7 +108,11 @@ namespace rax::collections::templates
 
 		RAX_INLINE auto get_bucket(std::uint32_t hash_code) const -> std::int32_t*
 		{
-			return this->m_buckets + hash_helpers::fast_mod(hash_code, static_cast<std::uint32_t>(this->m_buckets_len), this->m_fastModMultiplier);
+#ifdef TARGET_64BIT
+			return this->m_buckets + hash_helpers::fast_mod(hash_code, this->m_buckets_len, this->m_fastModMultiplier);
+#else
+			return this->m_buckets + (hash_code % this->m_buckets_len);
+#endif
 		}
 
 		void initialize(std::uint32_t capacity)
@@ -149,7 +145,7 @@ namespace rax::collections::templates
 
 				do
 				{
-					if (static_cast<std::uint32_t>(i) >= static_cast<std::uint32_t>(this->m_entries_len))
+					if (static_cast<std::uint32_t>(i) >= this->m_entries_len)
 					{
 						return nullptr;
 					}
@@ -284,8 +280,9 @@ namespace rax::collections::templates
 
 			*bucket = index + 1;
 
-			if (this->m_comparer.same_as<non_randomized_string_comparer::ordinal_comparer>() ||
-				this->m_comparer.same_as<non_randomized_string_comparer::ordinal_ignore_case_comparer>())
+			// blittable types never get rehashed
+
+			if constexpr (!is_blittable<tkey>::value /* && #TODO string types */)
 			{
 				if (collision_count > 100)
 				{
@@ -387,7 +384,7 @@ namespace rax::collections::templates
 
 		void resize()
 		{
-
+			this->resize(hash_helpers::expand_prime(this->m_count), false);
 		}
 		void resize(int new_size, bool force_new_hash_codes)
 		{

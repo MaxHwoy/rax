@@ -17,18 +17,10 @@ namespace rax::collections::templates
 
 		bool equals(const T& a, const T& b) const
 		{
-			return a == b;
-		}
+			const auto lhs = reinterpret_cast<const T*>(&a);
+			const auto rhs = reinterpret_cast<const T*>(&b);
 
-		template <typename S = equality_comparer> RAX_INLINE bool same_as() const
-		{
-			return false;
-
-			//auto instance = S();
-			//
-			//return
-			//	static_cast<uintptr_t>(&this->get_hashcode) == static_cast<uintptr_t>(&instance.get_hashcode) &&
-			//	static_cast<uintptr_t>(&this->equals) == static_cast<uintptr_t>(&instance.equals);
+			return ::memcmp(lhs, rhs, sizeof(T)) == 0;
 		}
 	};
 
